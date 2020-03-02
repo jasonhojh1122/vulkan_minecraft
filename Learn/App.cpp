@@ -1,7 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "App.h"
 
-
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
 	const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
 	const VkAllocationCallbacks* pAllocator,

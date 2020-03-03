@@ -151,6 +151,7 @@ private:
 	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes);
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 	void createSwapChain();
+	VkImageView createImageView(VkImage image, VkFormat format);
 	void createImageViews();
 	void createDescriptorSetLayout();
 	void createGraphicsPipeline();
@@ -164,6 +165,8 @@ private:
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 	void createTextureImage();
+	void createTextureImageView();
+	void createTextureSampler();
 	void createVertexBuffer();
 	void createIndexBuffer();
 	void createUniformBuffers();
@@ -226,4 +229,6 @@ private:
 
 	VkImage textureImage;
 	VkDeviceMemory textureImageMemory;
+	VkImageView textureImageView;
+	VkSampler textureSampler;
 };

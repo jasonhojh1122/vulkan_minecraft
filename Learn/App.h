@@ -41,6 +41,7 @@ const bool enableValidationLayers = true;
 #endif
 
 // test visual studio git
+// test visual studio git on notebook
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
 	const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,

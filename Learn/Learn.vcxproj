@@ -78,8 +78,8 @@
     <LibraryPath>C:\VulkanSDK\1.1.126.0\Bin32;C:\VulkanSDK\1.1.126.0\Lib32;E:\Coding\Vulkan\Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\VulkanSDK\1.1.126.0\Include;E:\Coding\Vulkan\Include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\VulkanSDK\1.1.126.0\Bin;C:\VulkanSDK\1.1.126.0\Lib;E:\Coding\Vulkan\Lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\VulkanSDK\1.2.131.1\Include;D:\Coding\Vulkan\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\VulkanSDK\1.2.131.1\Bin;C:\VulkanSDK\1.2.131.1\Lib;D:\Coding\Vulkan\Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -129,7 +129,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.1.126.0\Include;E:\Coding\Vulkan\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\VulkanSDK\1.2.131.1\Include;D:\Coding\Vulkan\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

@@ -145,6 +145,10 @@
   <ItemGroup>
     <ClInclude Include="App.h" />
     <ClInclude Include="Instance.h" />
+    <ClInclude Include="LogicalDevice.h" />
+    <ClInclude Include="PhysicalDevice.h" />
+    <ClInclude Include="SwapChain.h" />
+    <ClInclude Include="ValidationDebugger.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>

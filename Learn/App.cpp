@@ -26,7 +26,7 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance,
 void App::run() {
 	initWindow();
 	initVulkan();
-	mainLoop();
+	// mainLoop();
 	cleanup();
 }
 
@@ -146,6 +146,7 @@ void App::createInstance() {
 	if (vkCreateInstance(&instanceCreateInfo, nullptr, &instance) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create instance.");
 	}
+
 }
 
 bool App::checkValidationLayerSupport() {

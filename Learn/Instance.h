@@ -1,96 +1,77 @@
 #pragma once
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
 #include <vector>
 #include <stdexcept>
-
-bool checkValidationSupport(std::vector<const char*>& validationLayers);
-std::vector<const char*> getRequiredExtensions(bool enableDebug);
+#include "ValidationDebugger.h"
 
 class Instance {
-
 public:
-	Instance() {}
-	Instance(bool _debug, std::vector<const char*>& validationLayers, std::vector<const char *>& requiredExtensions) : enableDebug(_debug){
-		createInstance(validationLayers);
+	Instance(ValidationDebugger &debugger){
+		createInstance(debugger);
+		if (debugger.isEnable())
+			debugger.createDebugMessenger(instance, nullptr);
 	}
-	void createInstance(std::vector<const char*>& validationLayers, std::vector<const char*>& requiredExtensions);
+	void destroyInstance() { vkDestroyInstance(instance, nullptr); };
+	VkInstance instance;
 
 private:
-	bool enableDebug;
-	VkInstance instance;
+	void retrieveRequiredExtensions(bool enableDebug);
+
+	void createInstance(ValidationDebugger& debugger);
+	void setupApplicationInfo(VkApplicationInfo& appInfo);
+	void setupInstanceCreateInfo(VkInstanceCreateInfo& createInfo, VkApplicationInfo& appInfo, ValidationDebugger& debugger);
+
+	std::vector<const char*> extensions;
 };
 
-Instance::Instance(bool _debug, std::vector<const char*>& validationLayers, std::vector<const char*>& requiredExtensions) {
-	createInstance(validationLayers);
-}
-
-void Instance::createInstance(std::vector<const char*> &validationLayers, std::vector<const char*>& requiredExtensions) {
-	if (enableDebug && !checkValidationSupport(validationLayers)) 
-		throw std::runtime_error("No support for wanted validation layers.");
+void Instance::createInstance(ValidationDebugger& debugger) {
 
 	VkApplicationInfo appInfo{};
+	setupApplicationInfo(appInfo);
+
+	VkInstanceCreateInfo instanceCreateInfo{};
+	setupInstanceCreateInfo(instanceCreateInfo, appInfo, debugger);
+	
+	if (vkCreateInstance(&instanceCreateInfo, nullptr, &instance) != VK_SUCCESS)
+		throw std::runtime_error("Failed to create vulkan instance.");
+}
+
+void Instance::setupApplicationInfo(VkApplicationInfo& appInfo) {
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.pApplicationName = "Learn";
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pEngineName = "No Engine";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.apiVersion = VK_API_VERSION_1_1;
+}
 
-	VkInstanceCreateInfo instanceCreateInfo{};
-	instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-	instanceCreateInfo.pApplicationInfo = &appInfo;
-
-	auto extensions = getRequiredExtensions();
-	instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-	instanceCreateInfo.ppEnabledExtensionNames = extensions.data();
-
-	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
-	if (enableDebug) {
-		instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-		instanceCreateInfo.ppEnabledLayerNames = validationLayers.data();
-		populateDebugMessengerCreateInfo(debugCreateInfo);
-		instanceCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+void Instance::setupInstanceCreateInfo(VkInstanceCreateInfo& createInfo, VkApplicationInfo &appInfo, ValidationDebugger& debugger) {
+	retrieveRequiredExtensions(debugger.isEnable());
+	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	createInfo.pApplicationInfo = &appInfo;
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+	createInfo.ppEnabledExtensionNames = extensions.data();
+	if (debugger.isEnable()) {
+		createInfo.enabledLayerCount = debugger.getValidationLayersSize();
+		createInfo.ppEnabledLayerNames = debugger.getValidationLayersName().data();
+		createInfo.pNext = &debugger.getDebugUtilsMessengerCreateInfoEXT();
 	}
 	else {
-		instanceCreateInfo.enabledLayerCount = 0;
-		instanceCreateInfo.pNext = nullptr;
+		createInfo.enabledLayerCount = 0;
+		createInfo.pNext = nullptr;
 	}
-
-	if (vkCreateInstance(&instanceCreateInfo, nullptr, &instance) != VK_SUCCESS)
-		throw std::runtime_error("failed to create instance.");
 }
 
-
-bool checkValidationSupport(std::vector<const char*>& validationLayers) {
-	uint32_t layerCount;
-	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-	std::vector<VkLayerProperties> availableLayers(layerCount);
-	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-
-	for (const char* layerName : validationLayers) {
-		bool layerFound = false;
-		for (const auto& layerProperties : availableLayers) {
-			if (strcmp(layerName, layerProperties.layerName) == 0) {
-				layerFound = true;
-				break;
-			}
-		}
-		if (!layerFound) return false;
-	}
-	return true;
-}
-
-std::vector<const char*> getRequiredExtensions(bool enableDebug) {
+void Instance::retrieveRequiredExtensions(bool enableDebug) {
 	uint32_t glfwExtensionCount = 0;
 	const char** glfwExtensions;
 	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
-	std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+	extensions.clear();
+	for (int i = 0; i < glfwExtensionCount; ++i)
+		extensions.push_back(glfwExtensions[i]);
 
 	if (enableDebug)
 		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
-	return extensions;
 }

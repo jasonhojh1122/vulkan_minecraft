@@ -14,9 +14,9 @@ struct QueueFamilyIndices {
 
 struct SwapChainSupportDetails {
 	VkSurfaceCapabilitiesKHR capabilities;
-	std::vector<VkSurfaceFormatKHR> formats;
+	std::vector<VkSurfaceFormatKHR> surfaceFormats;
 	std::vector<VkPresentModeKHR> presentModes;
-	bool isEmpty() { return formats.empty() || presentModes.empty(); }
+	bool isEmpty() { return surfaceFormats.empty() || presentModes.empty(); }
 };
 
 class PhysicalDevice {
@@ -134,7 +134,7 @@ bool PhysicalDevice::isSwapChainSupported(VkPhysicalDevice candidate) {
 }
 
 void PhysicalDevice::retrieveSwapChainSupportDetails(VkPhysicalDevice candidate) {
-	swapChainSupportDetails.formats.clear();
+	swapChainSupportDetails.surfaceFormats.clear();
 	swapChainSupportDetails.presentModes.clear();
 
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(candidate, window->getSurface(), &swapChainSupportDetails.capabilities);
@@ -142,8 +142,8 @@ void PhysicalDevice::retrieveSwapChainSupportDetails(VkPhysicalDevice candidate)
 	uint32_t formatCount;
 	vkGetPhysicalDeviceSurfaceFormatsKHR(candidate, window->getSurface(), &formatCount, nullptr);
 	if (formatCount != 0) {
-		swapChainSupportDetails.formats.resize(formatCount);
-		vkGetPhysicalDeviceSurfaceFormatsKHR(candidate, window->getSurface(), &formatCount, swapChainSupportDetails.formats.data());
+		swapChainSupportDetails.surfaceFormats.resize(formatCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(candidate, window->getSurface(), &formatCount, swapChainSupportDetails.surfaceFormats.data());
 	}
 
 	uint32_t presentModeCount;

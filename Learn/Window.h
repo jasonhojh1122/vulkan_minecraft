@@ -12,6 +12,7 @@ public:
 	void createVulkanSurface();
 	int getWidth() { return width; }
 	int getHeight() { return height; }
+	GLFWwindow* getGLFWWIndow() { return glfwWindow; }
 	VkSurfaceKHR& getSurface() { return surface; };
 	void destroyWindow();
 

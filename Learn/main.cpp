@@ -1,11 +1,4 @@
 
-/*
-int main() {
-	App app;
-	app.run();
-}
-*/
-
 #include "Window.h"
 #include "ValidationDebugger.h"
 #include "PhysicalDevice.h"

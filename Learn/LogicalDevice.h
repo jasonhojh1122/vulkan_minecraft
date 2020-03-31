@@ -9,6 +9,7 @@ public:
 	VkDevice& getDevice() { return device; }
 	VkQueue& getGraphicQueue() { return graphicQueue; }
 	VkQueue& getPresentQueue() { return presentQueue; }
+	PhysicalDevice* getPhysicalDevice() { return physicalDevice; }
 
 private:
 	void createDevice();

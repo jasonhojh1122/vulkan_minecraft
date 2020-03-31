@@ -3,6 +3,7 @@
 #include <set>
 #include <stdexcept>
 #include <optional>
+#include <algorithm>
 #include "Instance.h"
 #include "Window.h"
 
@@ -26,6 +27,8 @@ public:
 	QueueFamilyIndices& getQueueFamilyIndices() { return queueFamilyIndices; }
 	SwapChainSupportDetails& getSwapChainSupportDetails() { return swapChainSupportDetails; }
 	VkPhysicalDeviceFeatures& getFeatures() { return features; }
+	VkFormat retrieveSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+	VkSampleCountFlagBits getMsaaSamples() { return msaaSamples; }
 
 private:
 	std::vector<VkPhysicalDevice> retrievePossiblePhysicalDevice();
@@ -37,6 +40,7 @@ private:
 	bool isPhysicalDeviceFeatureSupported(VkPhysicalDevice candidate);
 	void retrieveQueueFamiliesIndices(VkPhysicalDevice candidate);
 	void retrieveSwapChainSupportDetails(VkPhysicalDevice candidate);
+	VkSampleCountFlagBits retrieveMultisampleCountFlagBits();
 
 	Instance* vkInstance;
 	Window* window;
@@ -45,6 +49,7 @@ private:
 	QueueFamilyIndices queueFamilyIndices;
 	SwapChainSupportDetails swapChainSupportDetails;
 	VkPhysicalDeviceFeatures features;
+	VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 };
 
 PhysicalDevice::PhysicalDevice(Instance& instance, Window& win) {
@@ -157,4 +162,39 @@ void PhysicalDevice::retrieveSwapChainSupportDetails(VkPhysicalDevice candidate)
 bool PhysicalDevice::isPhysicalDeviceFeatureSupported(VkPhysicalDevice candidate) {
 	vkGetPhysicalDeviceFeatures(candidate, &features);
 	return features.samplerAnisotropy;
+}
+
+VkFormat PhysicalDevice::retrieveSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) {
+	for (VkFormat format : candidates) {
+		VkFormatProperties prop;
+		vkGetPhysicalDeviceFormatProperties(device, format, &prop);
+		if (tiling == VK_IMAGE_TILING_LINEAR && (prop.linearTilingFeatures & features) == features)
+			return format;
+
+		if (tiling == VK_IMAGE_TILING_OPTIMAL && (prop.optimalTilingFeatures & features) == features)
+			return format;
+	}
+}
+
+VkSampleCountFlagBits PhysicalDevice::retrieveMultisampleCountFlagBits() {
+	VkPhysicalDeviceProperties physicalDeviceProperties;
+	vkGetPhysicalDeviceProperties(device, &physicalDeviceProperties);
+
+	VkSamplerCreateFlags counts = std::min(physicalDeviceProperties.limits.framebufferColorSampleCounts,
+		physicalDeviceProperties.limits.framebufferDepthSampleCounts);
+
+	if (counts & VK_SAMPLE_COUNT_64_BIT)
+		return VK_SAMPLE_COUNT_64_BIT;
+	if (counts & VK_SAMPLE_COUNT_32_BIT)
+		return VK_SAMPLE_COUNT_32_BIT;
+	if (counts & VK_SAMPLE_COUNT_16_BIT)
+		return VK_SAMPLE_COUNT_16_BIT;
+	if (counts & VK_SAMPLE_COUNT_8_BIT)
+		return VK_SAMPLE_COUNT_8_BIT;
+	if (counts & VK_SAMPLE_COUNT_4_BIT)
+		return VK_SAMPLE_COUNT_4_BIT;
+	if (counts & VK_SAMPLE_COUNT_2_BIT)
+		return VK_SAMPLE_COUNT_2_BIT;
+
+	return VK_SAMPLE_COUNT_1_BIT;
 }

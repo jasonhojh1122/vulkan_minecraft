@@ -7,11 +7,11 @@
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/hash.hpp>
 
 #include <stb_master/stb_image.h>
 #include <tiny_obj_loader.h>
-#include <glm/gtc/matrix_transform.hpp>
 
 #include <chrono>
 #include <vector>
@@ -51,7 +51,7 @@ const bool enableValidationLayers = true;
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
 	const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-	const VkAllocationCallbacks* pAllocator, 
+	const VkAllocationCallbacks* pAllocator,
 	VkDebugUtilsMessengerEXT* pDebugMessenger);
 
 void DestroyDebugUtilsMessengerEXT(VkInstance instance,
@@ -133,13 +133,11 @@ const std::vector<Vertex> vertices = {
 	{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {{0.0f}, {0.0f}}},
 	{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {{0.0f}, {1.0f}}},
 	{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {{1.0f}, {1.0f}}},
-
 	{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {{1.0f}, {0.0f}}},
 	{{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {{0.0f}, {0.0f}}},
 	{{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {{0.0f}, {1.0f}}},
 	{{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {{1.0f}, {1.0f}}}
 };
-
 const std::vector<uint16_t> indices = {
 	0, 1, 2, 2, 3, 0,
 	4, 5, 6, 6, 7, 4
@@ -166,7 +164,7 @@ private:
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-		VkDebugUtilsMessageTypeFlagsEXT messageType, 
+		VkDebugUtilsMessageTypeFlagsEXT messageType,
 		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 		void* pUserData);
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
@@ -186,7 +184,7 @@ private:
 	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes);
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 	void createSwapChain();
-	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
+	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 	void createImageViews();
 	void createDescriptorSetLayout();
 	void createGraphicsPipeline();
@@ -195,8 +193,8 @@ private:
 	void createCommandPool();
 	void createDepthResources();
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-	void createImage(uint32_t width, uint32_t height, 
-		VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, 
+	void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples,
+		VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
 		VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
@@ -216,7 +214,7 @@ private:
 	VkCommandBuffer beginSingleTimeCommands();
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 
-	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
 
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
@@ -233,7 +231,12 @@ private:
 
 	void loadModel();
 
-	GLFWwindow *window;
+	void generateMipmaps(VkImage image, VkFormat format, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
+	void createColorResources();
+
+	VkSampleCountFlagBits getMaxUsableSampleCount();
+
+	GLFWwindow* window;
 	VkInstance instance;
 	VkDebugUtilsMessengerEXT debugMessenger;
 	VkSurfaceKHR surface;
@@ -273,13 +276,19 @@ private:
 	size_t currentFrame = 0;
 	bool framebufferResized = false;
 
+	uint32_t mipLevels;
 	VkImage textureImage;
 	VkDeviceMemory textureImageMemory;
 	VkImageView textureImageView;
 	VkSampler textureSampler;
 
+	VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+
 	VkImage depthImage;
 	VkDeviceMemory depthImageMemory;
 	VkImageView depthImageView;
 
+	VkImage colorImage;
+	VkDeviceMemory colorImageMemory;
+	VkImageView colorImageView;
 };

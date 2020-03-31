@@ -7,7 +7,9 @@
 
 class SwapChain {
 public:
-	SwapChain(PhysicalDevice& physicalDevice, LogicalDevice& device, Window& window);
+	SwapChain(LogicalDevice& device, Window& window);
+	VkFormat getFormat() { return surfaceFormat.format; }
+	VkExtent2D getExtent() { return extent; }
 
 private:
 	void setupCreateInfo(VkSwapchainCreateInfoKHR& createInfo);
@@ -19,7 +21,6 @@ private:
 	VkExtent2D retrieveExtent();
 	uint32_t retrieveSwapChainImageCount();
 
-	PhysicalDevice* physicalDevice;
 	LogicalDevice* device;
 	Window* window;
 	SwapChainSupportDetails* supportDetails;
@@ -32,13 +33,13 @@ private:
 	std::vector<SwapChainImage*> images;
 };
 
-SwapChain::SwapChain(PhysicalDevice& phyDevice, LogicalDevice& dev, Window& win) {
-	physicalDevice = &phyDevice;
+SwapChain::SwapChain(LogicalDevice& dev, Window& win) {
 	device = &dev;
 	window = &win;
-	supportDetails = &physicalDevice->getSwapChainSupportDetails();
+	supportDetails = &device->getPhysicalDevice()->getSwapChainSupportDetails();
 
 	createSwapChain();
+	createImages();
 }
 
 VkPresentModeKHR SwapChain::selectPresentMode() {
@@ -56,7 +57,7 @@ VkSurfaceFormatKHR SwapChain::selectSurfaceFormat() {
 }
 
 VkExtent2D SwapChain::retrieveExtent() {
-	VkSurfaceCapabilitiesKHR capabilities = physicalDevice->getSwapChainSupportDetails().capabilities;
+	VkSurfaceCapabilitiesKHR capabilities = device->getPhysicalDevice()->getSwapChainSupportDetails().capabilities;
 	if (capabilities.currentExtent.width != UINT32_MAX) {
 		return capabilities.currentExtent;
 	}
@@ -101,7 +102,7 @@ void SwapChain::setupCreateInfo(VkSwapchainCreateInfoKHR& createInfo) {
 	createInfo.imageArrayLayers = 1;
 	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-	QueueFamilyIndices indices = physicalDevice->getQueueFamilyIndices();
+	QueueFamilyIndices indices = device->getPhysicalDevice()->getQueueFamilyIndices();
 	uint32_t queueFamilyIndices[] = { indices.graphic.value(), indices.present.value() };
 	if (indices.graphic.value() != indices.present.value()) {
 		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
@@ -128,7 +129,6 @@ void SwapChain::createImages() {
 
 	images.resize(imageCount);
 	for (int i = 0; i < imageCount; ++i) {
-		images[i] = new Image();
-		images[i]->setImage(swapChainImages[i]);
+		images[i] = new SwapChainImage(device, swapChainImages[i]);
 	}
 }

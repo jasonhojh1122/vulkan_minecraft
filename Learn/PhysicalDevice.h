@@ -29,6 +29,7 @@ public:
 	VkPhysicalDeviceFeatures& getFeatures() { return features; }
 	VkFormat retrieveSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 	VkSampleCountFlagBits getMsaaSamples() { return msaaSamples; }
+	uint32_t retrieveMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 private:
 	std::vector<VkPhysicalDevice> retrievePossiblePhysicalDevice();
@@ -49,6 +50,7 @@ private:
 	QueueFamilyIndices queueFamilyIndices;
 	SwapChainSupportDetails swapChainSupportDetails;
 	VkPhysicalDeviceFeatures features;
+	VkPhysicalDeviceMemoryProperties memProperties;
 	VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 };
 
@@ -56,6 +58,7 @@ PhysicalDevice::PhysicalDevice(Instance& instance, Window& win) {
 	vkInstance = &instance;
 	window = &win;
 	selectPhysicalDevice();
+	vkGetPhysicalDeviceMemoryProperties(device, &memProperties);
 }
 
 void PhysicalDevice::selectPhysicalDevice() {
@@ -64,6 +67,7 @@ void PhysicalDevice::selectPhysicalDevice() {
 	for (const auto& candidate : possibleDevices) {
 		if (isDeviceSuitable(candidate)) {
 			device = candidate;
+			msaaSamples = retrieveMultisampleCountFlagBits();
 			return;
 		}
 	}
@@ -177,11 +181,11 @@ VkFormat PhysicalDevice::retrieveSupportedFormat(const std::vector<VkFormat>& ca
 }
 
 VkSampleCountFlagBits PhysicalDevice::retrieveMultisampleCountFlagBits() {
-	VkPhysicalDeviceProperties physicalDeviceProperties;
-	vkGetPhysicalDeviceProperties(device, &physicalDeviceProperties);
+	VkPhysicalDeviceProperties properties;
+	vkGetPhysicalDeviceProperties(device, &properties);
 
-	VkSamplerCreateFlags counts = std::min(physicalDeviceProperties.limits.framebufferColorSampleCounts,
-		physicalDeviceProperties.limits.framebufferDepthSampleCounts);
+	VkSamplerCreateFlags counts = std::min(properties.limits.framebufferColorSampleCounts,
+		properties.limits.framebufferDepthSampleCounts);
 
 	if (counts & VK_SAMPLE_COUNT_64_BIT)
 		return VK_SAMPLE_COUNT_64_BIT;
@@ -197,4 +201,11 @@ VkSampleCountFlagBits PhysicalDevice::retrieveMultisampleCountFlagBits() {
 		return VK_SAMPLE_COUNT_2_BIT;
 
 	return VK_SAMPLE_COUNT_1_BIT;
+}
+
+uint32_t PhysicalDevice::retrieveMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFlags requriedProp) {
+	for (uint32_t i = 0; i < memProperties.memoryTypeCount; ++i)
+		if (typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags & requriedProp) == requriedProp)
+			return i;
+	throw std::runtime_error("Failed to find suitable memory type");
 }

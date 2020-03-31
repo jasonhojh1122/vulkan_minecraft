@@ -7,6 +7,7 @@
 #include "Descriptor.h"
 #include "Pipeline.h"
 #include "CommandPool.h"
+#include "ImageResource.h"
 
 int main() {
 	Window window(800, 600);
@@ -21,8 +22,20 @@ int main() {
 	Descriptor descriptor(device);
 	Pipeline pipeline(device, swapChain, descriptor, renderPass);
 	CommandPool commandPool(device);
+	ImageResource colorResource(device, swapChain.getExtent().width, swapChain.getExtent().height, 1);
+	
+
 	system("pause");
 	return 0;
 }
 
+/*
+#include "App.h"
 
+int main() {
+	App app;
+	app.run();
+	system("pause");
+	return 0;
+}
+*/

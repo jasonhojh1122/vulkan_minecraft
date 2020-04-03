@@ -1,4 +1,3 @@
-
 #include "Window.h"
 #include "ValidationDebugger.h"
 #include "LogicalDevice.h"
@@ -7,7 +6,10 @@
 #include "Descriptor.h"
 #include "Pipeline.h"
 #include "CommandPool.h"
-#include "ImageResource.h"
+#include "Resources.h"
+#include "Framebuffers.h"
+#include "Texture.h"
+#include "Model.h"
 
 int main() {
 	Window window(800, 600);
@@ -18,18 +20,23 @@ int main() {
 	PhysicalDevice physicalDevice(instance, window);
 	LogicalDevice device(physicalDevice, debugger);
 	SwapChain swapChain(device, window);
-	RenderPass renderPass(device, swapChain);
+	CommandPool commandPool(device);
+	ColorResource colorResource(device, swapChain, commandPool);
+	DepthResource depthResource(device, swapChain, commandPool);
+	RenderPass renderPass(device, colorResource, depthResource);
+	Framebuffers framebuffers(device, renderPass, swapChain, colorResource, depthResource);
 	Descriptor descriptor(device);
 	Pipeline pipeline(device, swapChain, descriptor, renderPass);
-	CommandPool commandPool(device);
-	ImageResource colorResource(device, swapChain.getExtent().width, swapChain.getExtent().height, 1);
-	
+	Texture texture(device, "textures/chalet.jpg", commandPool);
+	Model model(device, "models/chalet.obj", commandPool);
 
 	system("pause");
 	return 0;
 }
 
+
 /*
+
 #include "App.h"
 
 int main() {
@@ -38,4 +45,5 @@ int main() {
 	system("pause");
 	return 0;
 }
+
 */

@@ -3,34 +3,37 @@
 #include <algorithm>
 #include "LogicalDevice.h"
 #include "Window.h"
-#include "SwapChainImage.h"
+#include "ImageResource.h"
 
 class SwapChain {
 public:
 	SwapChain(LogicalDevice& device, Window& window);
 	VkFormat getFormat() { return surfaceFormat.format; }
 	VkExtent2D getExtent() { return extent; }
+	uint32_t getImageCount() { return imageCount; }
+	std::vector<ImageResource*>& getSwapChainResources() { return swapChainResources; }
 
 private:
-	void setupCreateInfo(VkSwapchainCreateInfoKHR& createInfo);
+	void setupCreateInfo(VkSwapchainCreateInfoKHR& createInfo, uint32_t queueFamilyIndices[]);
 	void createSwapChain();
-	void createImages();
 
 	VkPresentModeKHR selectPresentMode();
 	VkSurfaceFormatKHR selectSurfaceFormat();
 	VkExtent2D retrieveExtent();
 	uint32_t retrieveSwapChainImageCount();
+	void createSwapChainImages();
+	void createSwapChainImageViews();
 
 	LogicalDevice* device;
 	Window* window;
 	SwapChainSupportDetails* supportDetails;
 	
 	VkSwapchainKHR swapChain;
+	std::vector<ImageResource*> swapChainResources;
 	VkPresentModeKHR presentMode;
 	VkSurfaceFormatKHR surfaceFormat;
 	VkExtent2D extent;
 	uint32_t imageCount;
-	std::vector<SwapChainImage*> images;
 };
 
 SwapChain::SwapChain(LogicalDevice& dev, Window& win) {
@@ -39,7 +42,23 @@ SwapChain::SwapChain(LogicalDevice& dev, Window& win) {
 	supportDetails = &device->getPhysicalDevice()->getSwapChainSupportDetails();
 
 	createSwapChain();
-	createImages();
+	createSwapChainImages();
+	createSwapChainImageViews();
+}
+
+void SwapChain::createSwapChain() {
+	presentMode = selectPresentMode();
+	surfaceFormat = selectSurfaceFormat();
+	extent = retrieveExtent();
+	imageCount = retrieveSwapChainImageCount();
+
+	VkSwapchainCreateInfoKHR createInfo{};
+	QueueFamilyIndices indices = device->getPhysicalDevice()->getQueueFamilyIndices();
+	uint32_t queueFamilyIndices[] = { indices.graphic.value(), indices.present.value() };
+	setupCreateInfo(createInfo, queueFamilyIndices);
+
+	if (vkCreateSwapchainKHR(device->getDevice(), &createInfo, nullptr, &swapChain) != VK_SUCCESS)
+		throw std::runtime_error("Failed to create swap chain.");
 }
 
 VkPresentModeKHR SwapChain::selectPresentMode() {
@@ -72,27 +91,14 @@ VkExtent2D SwapChain::retrieveExtent() {
 }
 
 uint32_t SwapChain::retrieveSwapChainImageCount() {
-	uint32_t imageCount = supportDetails->capabilities.minImageCount + 1;
-	if (supportDetails->capabilities.maxImageCount > 0 && imageCount > supportDetails->capabilities.maxImageCount) {
-		imageCount = supportDetails->capabilities.maxImageCount;
+	uint32_t count = supportDetails->capabilities.minImageCount + 1;
+	if (supportDetails->capabilities.maxImageCount > 0 && count > supportDetails->capabilities.maxImageCount) {
+		count = supportDetails->capabilities.maxImageCount;
 	}
-	return imageCount;
+	return count;
 }
 
-void SwapChain::createSwapChain() {
-	presentMode = selectPresentMode();
-	surfaceFormat = selectSurfaceFormat();
-	extent = retrieveExtent();
-	imageCount = retrieveSwapChainImageCount();
-
-	VkSwapchainCreateInfoKHR createInfo{};
-	setupCreateInfo(createInfo);
-
-	if (vkCreateSwapchainKHR(device->getDevice(), &createInfo, nullptr, &swapChain) != VK_SUCCESS)
-		throw std::runtime_error("Failed to create swap chain.");
-}
-
-void SwapChain::setupCreateInfo(VkSwapchainCreateInfoKHR& createInfo) {
+void SwapChain::setupCreateInfo(VkSwapchainCreateInfoKHR& createInfo, uint32_t queueFamilyIndices[]) {
 	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	createInfo.surface = window->getSurface();
 	createInfo.minImageCount = imageCount;
@@ -101,10 +107,8 @@ void SwapChain::setupCreateInfo(VkSwapchainCreateInfoKHR& createInfo) {
 	createInfo.imageExtent = extent;
 	createInfo.imageArrayLayers = 1;
 	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-	QueueFamilyIndices indices = device->getPhysicalDevice()->getQueueFamilyIndices();
-	uint32_t queueFamilyIndices[] = { indices.graphic.value(), indices.present.value() };
-	if (indices.graphic.value() != indices.present.value()) {
+	
+	if (queueFamilyIndices[0] != queueFamilyIndices[1]) {
 		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
 		createInfo.queueFamilyIndexCount = 2;
 		createInfo.pQueueFamilyIndices = queueFamilyIndices;
@@ -121,14 +125,21 @@ void SwapChain::setupCreateInfo(VkSwapchainCreateInfoKHR& createInfo) {
 	createInfo.oldSwapchain = VK_NULL_HANDLE;
 }
 
-void SwapChain::createImages() {
+void SwapChain::createSwapChainImages() {
 	std::vector<VkImage> swapChainImages;
 	vkGetSwapchainImagesKHR(device->getDevice(), swapChain, &imageCount, nullptr);
 	swapChainImages.resize(imageCount);
+	swapChainResources.resize(imageCount);
 	vkGetSwapchainImagesKHR(device->getDevice(), swapChain, &imageCount, swapChainImages.data());
 
-	images.resize(imageCount);
-	for (int i = 0; i < imageCount; ++i) {
-		images[i] = new SwapChainImage(device, swapChainImages[i]);
+	for (uint32_t i = 0; i < imageCount; ++i) {
+		swapChainResources[i] = new ImageResource(*device, extent.width, extent.height, 1);
+		swapChainResources[i]->setImage(swapChainImages[i]);
+		swapChainResources[i]->setFormat(getFormat());
 	}
+}
+
+void SwapChain::createSwapChainImageViews() {
+	for (uint32_t i = 0; i < imageCount; ++i)
+		swapChainResources[i]->createImageView(VK_IMAGE_ASPECT_COLOR_BIT);
 }

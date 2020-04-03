@@ -27,8 +27,8 @@ public:
 	QueueFamilyIndices& getQueueFamilyIndices() { return queueFamilyIndices; }
 	SwapChainSupportDetails& getSwapChainSupportDetails() { return swapChainSupportDetails; }
 	VkPhysicalDeviceFeatures& getFeatures() { return features; }
-	VkFormat retrieveSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 	VkSampleCountFlagBits getMsaaSamples() { return msaaSamples; }
+	VkFormat retrieveSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 	uint32_t retrieveMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 private:

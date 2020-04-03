@@ -1,11 +1,11 @@
 #pragma once
 
-#include "SwapChain.h"
+#include "Resources.h"
 #include "LogicalDevice.h"
 
 class RenderPass {
 public:
-	RenderPass(LogicalDevice& logicalDevice, SwapChain& swapChain);
+	RenderPass(LogicalDevice& logicalDevice, ColorResource& colorResource, DepthResource& depthResource);
 	void createRenderPass();
 	VkRenderPass& getRenderPass() { return renderPass; }
 	
@@ -20,14 +20,16 @@ private:
 		VkSubpassDescription& subpass, VkSubpassDependency& dependency);
 
 	LogicalDevice* device;
-	SwapChain* swapChain;
+	ColorResource* colorResource;
+	DepthResource* depthResource;
 	VkRenderPass renderPass;
 
 };
 
-RenderPass::RenderPass(LogicalDevice& logicalDevice, SwapChain& swap) {
-	device = &logicalDevice;
-	swapChain = &swap;
+RenderPass::RenderPass(LogicalDevice& inDevice, ColorResource& inColorResource, DepthResource& inDepthResource) {
+	device = &inDevice;
+	colorResource = &inColorResource;
+	depthResource = &inDepthResource;
 	createRenderPass();
 }
 
@@ -65,7 +67,7 @@ void RenderPass::setupAttachments(std::vector<VkAttachmentDescription>& descript
 }
 
 void RenderPass::setupColorAttachmentDescription(VkAttachmentDescription& description) {
-	description.format = swapChain->getFormat();
+	description.format = colorResource->getFormat();
 	description.samples = device->getPhysicalDevice()->getMsaaSamples();
 	description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -76,10 +78,7 @@ void RenderPass::setupColorAttachmentDescription(VkAttachmentDescription& descri
 }
 
 void RenderPass::setupDepthAttachmentDescription(VkAttachmentDescription& description) {
-	description.format = device->getPhysicalDevice()->retrieveSupportedFormat(
-		{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, 
-		VK_IMAGE_TILING_OPTIMAL,
-		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+	description.format = depthResource->getFormat();
 	description.samples = device->getPhysicalDevice()->getMsaaSamples();
 	description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	description.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -90,7 +89,7 @@ void RenderPass::setupDepthAttachmentDescription(VkAttachmentDescription& descri
 }
 
 void RenderPass::setupResolveAttachmentDescription(VkAttachmentDescription& description) {
-	description.format = swapChain->getFormat();
+	description.format = colorResource->getFormat();
 	description.samples = VK_SAMPLE_COUNT_1_BIT;
 	description.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;

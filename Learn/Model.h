@@ -10,8 +10,10 @@
 
 class Model {
 public:
-	Model(LogicalDevice& device, std::string path, CommandPool& commandPool);
-
+	Model(LogicalDevice* device, std::string path, CommandPool* commandPool);
+	Buffer* getVertexBufferRef() { return vertexBuffer; }
+	Buffer* getIndexBufferRef() { return indexBuffer; }
+	
 private:
 	void loadModel(std::string path);
 	void createVertexBuffer();
@@ -30,9 +32,9 @@ private:
 	Buffer* indexBuffer;
 };
 
-Model::Model(LogicalDevice& inDevice, std::string path, CommandPool& inCommandPool) {
-	device = &inDevice;
-	commandPool = &inCommandPool;
+Model::Model(LogicalDevice* inDevice, std::string path, CommandPool* inCommandPool) {
+	device = inDevice;
+	commandPool = inCommandPool;
 	loadModel(path);
 
 }
@@ -74,17 +76,17 @@ void Model::loadModel(std::string path) {
 void Model::createVertexBuffer() {
 	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
-	Buffer* stagingBuffer = new Buffer(*device, bufferSize, 
+	Buffer* stagingBuffer = new Buffer(device, bufferSize, 
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
 		VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 	stagingBuffer->copyDataToBuffer(vertices.data());
 
-	vertexBuffer = new Buffer(*device, bufferSize, 
+	vertexBuffer = new Buffer(device, bufferSize, 
 		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	vertexBuffer->copyBufferToBuffer(*stagingBuffer, *commandPool);
+	vertexBuffer->copyBufferToBuffer(stagingBuffer, commandPool);
 
 	delete stagingBuffer;
 }
@@ -92,17 +94,17 @@ void Model::createVertexBuffer() {
 void Model::createIndexBuffer() {
 	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
-	Buffer* stagingBuffer = new Buffer(*device, bufferSize,
+	Buffer* stagingBuffer = new Buffer(device, bufferSize,
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 	stagingBuffer->copyDataToBuffer(indices.data());
 
-	indexBuffer = new Buffer(*device, bufferSize,
+	indexBuffer = new Buffer(device, bufferSize,
 		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	indexBuffer->copyBufferToBuffer(*stagingBuffer, *commandPool);
+	indexBuffer->copyBufferToBuffer(stagingBuffer, commandPool);
 
 	delete stagingBuffer;
 }

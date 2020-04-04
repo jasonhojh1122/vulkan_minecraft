@@ -6,10 +6,12 @@
 class CommandBuffer {
 public:
 	~CommandBuffer();
-	CommandBuffer(LogicalDevice& device, CommandPool& commandPool);
+	CommandBuffer(LogicalDevice* device, CommandPool* commandPool);
 	VkCommandBuffer& getCommandBuffer() { return commandBuffer; }
 	void beginSingalTimeCommands();
 	void endSingalTimeCommands();
+	void beginCommands();
+	void endCommands();
 
 private:
 	void allocateCommandBuffer();
@@ -25,9 +27,9 @@ CommandBuffer::~CommandBuffer() {
 	vkFreeCommandBuffers(device->getDevice(), commandPool->getCommandPool(), 1, &commandBuffer);
 }
 
-CommandBuffer::CommandBuffer(LogicalDevice& inDevice, CommandPool& inCommandPool) {
-	device = &inDevice;
-	commandPool = &inCommandPool;
+CommandBuffer::CommandBuffer(LogicalDevice* inDevice, CommandPool* inCommandPool) {
+	device = inDevice;
+	commandPool = inCommandPool;
 	allocateCommandBuffer();
 }
 
@@ -61,7 +63,8 @@ void CommandBuffer::beginSingalTimeCommands() {
 }
 
 void CommandBuffer::endSingalTimeCommands() {
-	vkEndCommandBuffer(commandBuffer);
+	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+		throw std::runtime_error("Failed to end recording command buffer.");
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -70,4 +73,18 @@ void CommandBuffer::endSingalTimeCommands() {
 
 	vkQueueSubmit(device->getGraphicQueue(), 1, &submitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(device->getGraphicQueue());
+}
+
+void CommandBuffer::beginCommands() {
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = 0;
+
+	if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+		throw std::runtime_error("Failed to begin command buffer.");
+}
+
+void CommandBuffer::endCommands() {
+	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+		throw std::runtime_error("Failed to end recording command buffer.");
 }

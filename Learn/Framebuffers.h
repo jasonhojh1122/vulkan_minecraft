@@ -6,8 +6,8 @@
 
 class Framebuffers {
 public:
-	Framebuffers(LogicalDevice& device, RenderPass& renderPass, 
-		SwapChain& swapChain, ColorResource& colorResource, DepthResource& depthResource);
+	Framebuffers(LogicalDevice* device, RenderPass* renderPass, SwapChain* swapChain);
+	VkFramebuffer& getFrameBuffer(size_t index) { return framebuffers[index]; }
 
 private:
 	void createFramebuffers();
@@ -18,17 +18,12 @@ private:
 	LogicalDevice* device;
 	RenderPass* renderPass;
 	SwapChain* swapChain;
-	ColorResource* colorResource;
-	DepthResource* depthResource;
 };
 
-Framebuffers::Framebuffers(LogicalDevice& inDevice, RenderPass& inRenderPass,
-	SwapChain& inSwapChain, ColorResource& inColorResource, DepthResource& inDepthResource) {
-	device = &inDevice;
-	renderPass = &inRenderPass;
-	swapChain = &inSwapChain;
-	colorResource = &inColorResource;
-	depthResource = &inDepthResource;
+Framebuffers::Framebuffers(LogicalDevice* inDevice, RenderPass* inRenderPass, SwapChain* inSwapChain) {
+	device = inDevice;
+	renderPass = inRenderPass;
+	swapChain = inSwapChain;
 	createFramebuffers();
 }
 
@@ -36,8 +31,10 @@ void Framebuffers::createFramebuffers() {
 	framebuffers.resize(swapChain->getImageCount());
 
 	for (uint32_t i = 0; i < swapChain->getImageCount(); ++i) {
-		std::array<VkImageView, 3> attachments = 
-		{ colorResource->getImageView(), depthResource->getImageView(), swapChain->getSwapChainResources()[i]->getImageView() };
+		std::array<VkImageView, 3> attachments = { 
+			renderPass->getColorResourceRef()->getImageView(), 
+			renderPass->getDepthResourceRef()->getImageView(), 
+			swapChain->getSwapChainResources()[i]->getImageView() };
 		
 		VkFramebufferCreateInfo framebufferCreateInfo{};
 		setupFramebufferCreateInfo(framebufferCreateInfo, attachments);

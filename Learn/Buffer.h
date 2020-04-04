@@ -5,11 +5,11 @@
 class Buffer {
 public:
 	~Buffer();
-	Buffer(LogicalDevice& device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
+	Buffer(LogicalDevice* device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
 	VkBuffer& getBuffer() { return buffer; }
 	VkDeviceMemory& getMemory() { return memory; }
 	void copyDataToBuffer(void *data);
-	void copyBufferToBuffer(Buffer& srcBuffer, CommandPool& commandPool);
+	void copyBufferToBuffer(Buffer* srcBuffer, CommandPool* commandPool);
 
 private:
 	void createBuffer();
@@ -30,8 +30,8 @@ Buffer::~Buffer() {
 	vkFreeMemory(device->getDevice(), memory, nullptr);
 }
 
-Buffer::Buffer(LogicalDevice& inDevice, VkDeviceSize inSize, VkBufferUsageFlags inUsage, VkMemoryPropertyFlags inProperties) {
-	device = &inDevice;
+Buffer::Buffer(LogicalDevice* inDevice, VkDeviceSize inSize, VkBufferUsageFlags inUsage, VkMemoryPropertyFlags inProperties) {
+	device = inDevice;
 	size = inSize;
 	usage = inUsage;
 	properties = inProperties;
@@ -75,15 +75,15 @@ void Buffer::copyDataToBuffer(void *src) {
 	vkUnmapMemory(device->getDevice(), memory);
 }
 
-void Buffer::copyBufferToBuffer(Buffer& srcBuffer, CommandPool& commandPool) {
-	CommandBuffer commandBuffer(*device, commandPool);
+void Buffer::copyBufferToBuffer(Buffer* srcBuffer, CommandPool* commandPool) {
+	CommandBuffer commandBuffer(device, commandPool);
 	commandBuffer.beginSingalTimeCommands();
 
 	VkBufferCopy region{};
 	region.srcOffset = 0;
 	region.dstOffset = 0;
 	region.size = size;
-	vkCmdCopyBuffer(commandBuffer.getCommandBuffer(), srcBuffer.getBuffer(), buffer, 1, &region);
+	vkCmdCopyBuffer(commandBuffer.getCommandBuffer(), srcBuffer->getBuffer(), buffer, 1, &region);
 
 	commandBuffer.endSingalTimeCommands();
 }

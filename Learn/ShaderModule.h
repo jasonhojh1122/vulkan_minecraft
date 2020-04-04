@@ -7,7 +7,7 @@
 class ShaderModule {
 public:
 	~ShaderModule();
-	ShaderModule(LogicalDevice& device, const std::string filename);
+	ShaderModule(LogicalDevice* device, const std::string filename);
 	VkShaderModule& getModule() { return shaderModule; }
 
 private:
@@ -19,8 +19,8 @@ private:
 	VkShaderModule shaderModule;
 };
 
-ShaderModule::ShaderModule(LogicalDevice& dev, const std::string filename) {
-	device = &dev;
+ShaderModule::ShaderModule(LogicalDevice* inDevice, const std::string filename) {
+	device = inDevice;
 	readFile(filename);
 	createShaderModule();
 }

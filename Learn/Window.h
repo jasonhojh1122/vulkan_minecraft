@@ -8,7 +8,7 @@ public:
 	Window(int w, int h);
 	void setWidth(int w) { width = w; }
 	void setHeight(int h) { height = h; }
-	void setInstanceRef(Instance& ins) { vkInstance = &ins; }
+	void setInstanceRef(Instance* ins) { vkInstance = ins; }
 	void createVulkanSurface();
 	int getWidth() { return width; }
 	int getHeight() { return height; }
@@ -36,7 +36,7 @@ void Window::createGLFWWindow() {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindow = glfwCreateWindow(width, height, "Vulkan Test", nullptr, nullptr);
 	glfwSetWindowUserPointer(glfwWindow, this);
-	// todo: deal with frame buffer resize
+	// TODO: deal with frame buffer resize
 	// glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 }
 

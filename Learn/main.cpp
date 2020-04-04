@@ -1,34 +1,7 @@
-#include "Window.h"
-#include "ValidationDebugger.h"
-#include "LogicalDevice.h"
-#include "SwapChain.h"
-#include "RenderPass.h"
-#include "Descriptor.h"
-#include "Pipeline.h"
-#include "CommandPool.h"
-#include "Resources.h"
-#include "Framebuffers.h"
-#include "Texture.h"
-#include "Model.h"
+#include "Application.h"
 
 int main() {
-	Window window(800, 600);
-	ValidationDebugger debugger(true);
-	Instance instance(debugger);
-	window.setInstanceRef(instance);
-	window.createVulkanSurface();
-	PhysicalDevice physicalDevice(instance, window);
-	LogicalDevice device(physicalDevice, debugger);
-	SwapChain swapChain(device, window);
-	CommandPool commandPool(device);
-	ColorResource colorResource(device, swapChain, commandPool);
-	DepthResource depthResource(device, swapChain, commandPool);
-	RenderPass renderPass(device, colorResource, depthResource);
-	Framebuffers framebuffers(device, renderPass, swapChain, colorResource, depthResource);
-	Descriptor descriptor(device);
-	Pipeline pipeline(device, swapChain, descriptor, renderPass);
-	Texture texture(device, "textures/chalet.jpg", commandPool);
-	Model model(device, "models/chalet.obj", commandPool);
+	Application app{};
 
 	system("pause");
 	return 0;

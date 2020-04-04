@@ -150,13 +150,17 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="Application.h" />
     <ClInclude Include="Buffer.h" />
+    <ClInclude Include="DrawCommands.h" />
+    <ClInclude Include="DescriptorPool.h" />
+    <ClInclude Include="Fence.h" />
     <ClInclude Include="Framebuffers.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Resources.h" />
     <ClInclude Include="CommandBuffer.h" />
     <ClInclude Include="CommandPool.h" />
-    <ClInclude Include="Descriptor.h" />
+    <ClInclude Include="DescriptorSets.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="ImageResource.h" />
     <ClInclude Include="Instance.h" />
@@ -164,9 +168,11 @@
     <ClInclude Include="PhysicalDevice.h" />
     <ClInclude Include="Pipeline.h" />
     <ClInclude Include="RenderPass.h" />
+    <ClInclude Include="Semaphores.h" />
     <ClInclude Include="ShaderModule.h" />
     <ClInclude Include="SwapChain.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="UniformBuffers.h" />
     <ClInclude Include="ValidationDebugger.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="Window.h" />

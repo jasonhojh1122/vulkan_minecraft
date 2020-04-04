@@ -5,9 +5,11 @@
 
 class RenderPass {
 public:
-	RenderPass(LogicalDevice& logicalDevice, ColorResource& colorResource, DepthResource& depthResource);
+	RenderPass(LogicalDevice* logicalDevice, ColorResource* colorResource, DepthResource* depthResource);
 	void createRenderPass();
 	VkRenderPass& getRenderPass() { return renderPass; }
+	ColorResource* getColorResourceRef() { return colorResource; }
+	DepthResource* getDepthResourceRef() { return depthResource; }
 	
 private:
 	void setupAttachments(std::vector<VkAttachmentDescription>& descriptions, std::vector<VkAttachmentReference>& references);
@@ -26,10 +28,10 @@ private:
 
 };
 
-RenderPass::RenderPass(LogicalDevice& inDevice, ColorResource& inColorResource, DepthResource& inDepthResource) {
-	device = &inDevice;
-	colorResource = &inColorResource;
-	depthResource = &inDepthResource;
+RenderPass::RenderPass(LogicalDevice* inDevice, ColorResource* inColorResource, DepthResource* inDepthResource) {
+	device = inDevice;
+	colorResource = inColorResource;
+	depthResource = inDepthResource;
 	createRenderPass();
 }
 

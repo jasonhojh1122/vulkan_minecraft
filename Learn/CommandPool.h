@@ -4,7 +4,7 @@
 
 class CommandPool {
 public:
-	CommandPool(LogicalDevice& device);
+	CommandPool(LogicalDevice* device);
 	VkCommandPool& getCommandPool() { return commandPool; }
 
 private:
@@ -15,8 +15,8 @@ private:
 	VkCommandPool commandPool;
 };
 
-CommandPool::CommandPool(LogicalDevice& inDevice) {
-	device = &inDevice;
+CommandPool::CommandPool(LogicalDevice* inDevice) {
+	device = inDevice;
 	createCommandPool();
 }
 

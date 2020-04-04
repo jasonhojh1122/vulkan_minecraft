@@ -8,7 +8,8 @@
 
 class Texture : public ImageResource {
 public:
-	Texture(LogicalDevice& device, std::string path, CommandPool& commandPool);
+	Texture(LogicalDevice* device, std::string path, CommandPool* commandPool);
+	VkSampler& getSampler() { return sampler; }
 
 private:
 	void loadTexture(std::string path);
@@ -26,16 +27,19 @@ private:
 	VkSampler sampler;
 };
 
-Texture::Texture(LogicalDevice& inDevice, std::string path, CommandPool& inCommandPool) : ImageResource(inDevice) {
-	device = &inDevice;
-	commandPool = &inCommandPool;
+Texture::Texture(LogicalDevice* inDevice, std::string path, CommandPool* inCommandPool) : ImageResource(inDevice) {
+	device = inDevice;
+	commandPool = inCommandPool;
 	loadTexture(path);
 	copyOriginalImageToBuffer();
+
 	createImageResource(VK_SAMPLE_COUNT_1_BIT, 
 		VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
-	transitImageLayout(*commandPool, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	transitImageLayout(commandPool, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	
+	createSampler();
 }
 
 void Texture::loadTexture(std::string path) {
@@ -51,7 +55,7 @@ void Texture::loadTexture(std::string path) {
 }
 
 void Texture::copyOriginalImageToBuffer() {
-	buffer = new Buffer(*device, imageSize,
+	buffer = new Buffer(device, imageSize,
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
@@ -61,7 +65,7 @@ void Texture::copyOriginalImageToBuffer() {
 }
 
 void Texture::copyBufferToVulkanImage() {
-	CommandBuffer commandBuffer(*device, *commandPool);
+	CommandBuffer commandBuffer(device, commandPool);
 	commandBuffer.beginSingalTimeCommands();
 
 	VkBufferImageCopy region{};

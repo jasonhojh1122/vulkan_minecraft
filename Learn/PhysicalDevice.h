@@ -22,7 +22,7 @@ struct SwapChainSupportDetails {
 
 class PhysicalDevice {
 public:
-	PhysicalDevice(Instance& instance, Window& win);
+	PhysicalDevice(Instance* instance, Window* win);
 	VkPhysicalDevice& getDevice() { return device; }
 	QueueFamilyIndices& getQueueFamilyIndices() { return queueFamilyIndices; }
 	SwapChainSupportDetails& getSwapChainSupportDetails() { return swapChainSupportDetails; }
@@ -54,9 +54,9 @@ private:
 	VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 };
 
-PhysicalDevice::PhysicalDevice(Instance& instance, Window& win) {
-	vkInstance = &instance;
-	window = &win;
+PhysicalDevice::PhysicalDevice(Instance* instance, Window* win) {
+	vkInstance = instance;
+	window = win;
 	selectPhysicalDevice();
 	vkGetPhysicalDeviceMemoryProperties(device, &memProperties);
 }

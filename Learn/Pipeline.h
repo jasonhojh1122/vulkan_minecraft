@@ -4,13 +4,14 @@
 #include "ShaderModule.h"
 #include "Vertex.h"
 #include "SwapChain.h"
-#include "Descriptor.h"
+#include "DescriptorSets.h"
 #include "RenderPass.h"
 
 class Pipeline {
 public:
-	Pipeline(LogicalDevice& device, SwapChain& swapChain, Descriptor& descriptor, RenderPass& renderPass);
-
+	Pipeline(LogicalDevice* device, SwapChain* swapChain, DescriptorSets* descriptorSets, RenderPass* renderPass);
+	VkPipelineLayout& getPipelineLayout() { return layout; }
+	VkPipeline& getPipeline() { return pipeline; }
 
 private:
 	void createGraphicsPipeline();
@@ -32,23 +33,23 @@ private:
 
 	LogicalDevice* device;
 	SwapChain* swapChain;
-	Descriptor* descriptor;
+	DescriptorSets* descriptorSets;
 	RenderPass* renderPass;
 	VkPipelineLayout layout;
 	VkPipeline pipeline;
 };
 
-Pipeline::Pipeline(LogicalDevice& inDevice, SwapChain& inSwapChain, Descriptor& inDescriptor, RenderPass& inRenderPass) {
-	device = &inDevice;
-	swapChain = &inSwapChain;
-	descriptor = &inDescriptor;
-	renderPass = &inRenderPass;
+Pipeline::Pipeline(LogicalDevice* inDevice, SwapChain* inSwapChain, DescriptorSets* inDescriptorSets, RenderPass* inRenderPass) {
+	device = inDevice;
+	swapChain = inSwapChain;
+	descriptorSets = inDescriptorSets;
+	renderPass = inRenderPass;
 	createGraphicsPipeline();
 }
 
 void Pipeline::createGraphicsPipeline() {
-	ShaderModule vertShaderModule(*device, "shaders/vert.spv");
-	ShaderModule fragShaderModule(*device, "shaders/frag.spv");
+	ShaderModule vertShaderModule(device, "shaders/vert.spv");
+	ShaderModule fragShaderModule(device, "shaders/frag.spv");
 
 	VkPipelineShaderStageCreateInfo vertShaderStage{}, fragShaderStage{};
 	setupShaderStageCreateInfo(vertShaderStage, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule);
@@ -221,7 +222,7 @@ void Pipeline::createPipelineLayout() {
 void Pipeline::setupLayoutCreateInfo(VkPipelineLayoutCreateInfo& createInfo) {
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	createInfo.setLayoutCount = 1;
-	createInfo.pSetLayouts = &descriptor->getLayout();
+	createInfo.pSetLayouts = &descriptorSets->getLayout();
 	createInfo.pushConstantRangeCount = 0;
 	createInfo.pPushConstantRanges = nullptr;
 }

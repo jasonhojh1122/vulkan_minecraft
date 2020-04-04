@@ -7,7 +7,7 @@
 
 class SwapChain {
 public:
-	SwapChain(LogicalDevice& device, Window& window);
+	SwapChain(LogicalDevice* device, Window* window);
 	VkFormat getFormat() { return surfaceFormat.format; }
 	VkExtent2D getExtent() { return extent; }
 	uint32_t getImageCount() { return imageCount; }
@@ -36,9 +36,9 @@ private:
 	uint32_t imageCount;
 };
 
-SwapChain::SwapChain(LogicalDevice& dev, Window& win) {
-	device = &dev;
-	window = &win;
+SwapChain::SwapChain(LogicalDevice* inDevice, Window* inWindow) {
+	device = inDevice;
+	window = inWindow;
 	supportDetails = &device->getPhysicalDevice()->getSwapChainSupportDetails();
 
 	createSwapChain();
@@ -133,7 +133,7 @@ void SwapChain::createSwapChainImages() {
 	vkGetSwapchainImagesKHR(device->getDevice(), swapChain, &imageCount, swapChainImages.data());
 
 	for (uint32_t i = 0; i < imageCount; ++i) {
-		swapChainResources[i] = new ImageResource(*device, extent.width, extent.height, 1);
+		swapChainResources[i] = new ImageResource(device, extent.width, extent.height, 1);
 		swapChainResources[i]->setImage(swapChainImages[i]);
 		swapChainResources[i]->setFormat(getFormat());
 	}

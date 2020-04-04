@@ -5,8 +5,8 @@
 
 class ImageResource {
 public:
-	ImageResource(LogicalDevice& device);
-	ImageResource(LogicalDevice& device, uint32_t width, uint32_t height, uint32_t mipLevels);
+	ImageResource(LogicalDevice* device);
+	ImageResource(LogicalDevice* device, uint32_t width, uint32_t height, uint32_t mipLevels);
 
 	void createImageResource(VkSampleCountFlagBits samples,	VkFormat format, VkImageTiling tiling, 
 		VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImageAspectFlags aspect);
@@ -23,7 +23,7 @@ protected:
 	void setWidth(uint32_t inWidth) { width = inWidth; }
 	void setHeight(uint32_t inHeight) { height = inHeight; }
 	void setMipLevels(uint32_t inMipLevels) { mipLevels = inMipLevels; }
-	void transitImageLayout(CommandPool& commandPool, VkImageLayout oldLayout, VkImageLayout newLayout);
+	void transitImageLayout(CommandPool* commandPool, VkImageLayout oldLayout, VkImageLayout newLayout);
 	
 	LogicalDevice* device;
 	uint32_t width, height, mipLevels;
@@ -42,12 +42,12 @@ private:
 
 };
 
-ImageResource::ImageResource(LogicalDevice& inDevice) {
-	device = &inDevice;
+ImageResource::ImageResource(LogicalDevice* inDevice) {
+	device = inDevice;
 }
 
-ImageResource::ImageResource(LogicalDevice& inDevice, uint32_t inWidth, uint32_t inHeight, uint32_t inMipLevels) {
-	device = &inDevice;
+ImageResource::ImageResource(LogicalDevice* inDevice, uint32_t inWidth, uint32_t inHeight, uint32_t inMipLevels) {
+	device = inDevice;
 	width = inWidth;
 	height = inHeight;
 	mipLevels = inMipLevels;
@@ -115,14 +115,14 @@ void ImageResource::createImageView(VkImageAspectFlags aspect) {
 		throw std::runtime_error("Failed to create image view.");
 }
 
-void ImageResource::transitImageLayout(CommandPool& commandPool, VkImageLayout oldLayout, VkImageLayout newLayout) {
+void ImageResource::transitImageLayout(CommandPool* commandPool, VkImageLayout oldLayout, VkImageLayout newLayout) {
 	VkImageMemoryBarrier barrier{};
 	setupImageMemoryBarrier(barrier, oldLayout, newLayout);
 
 	VkPipelineStageFlags srcStage, dstStage;
 	setupAccessMaskAndStage(barrier, srcStage, dstStage, oldLayout, newLayout);
 	
-	CommandBuffer buffer(*device, commandPool);
+	CommandBuffer buffer(device, commandPool);
 	buffer.beginSingalTimeCommands();
 
 	vkCmdPipelineBarrier(

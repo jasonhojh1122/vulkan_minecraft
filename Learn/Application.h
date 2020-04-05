@@ -28,6 +28,8 @@ public:
 	Application();
 	void run();
 
+	bool windowIsResized = false;
+
 private:
 	void init();
 
@@ -42,6 +44,7 @@ private:
 
 	void windowResize();
 	void cleanupSwapChainRelated();
+	void recreateSwapChainRelated();
 
 	Window* window;
 	ValidationDebugger* debugger;
@@ -75,6 +78,8 @@ Application::Application() {
 	init();
 }
 
+
+
 void Application::init() {
 	window		= new Window(800, 600);
 	debugger	= new ValidationDebugger(true);
@@ -93,7 +98,7 @@ void Application::init() {
 	depthResouce	= new DepthResource(device, swapChain, commandPool);
 
 	descriptorSetLayout = new DescriptorSetLayout(device);
-	renderPass		= new RenderPass(device, colorResource, depthResouce);
+	renderPass		= new RenderPass(device, swapChain, colorResource, depthResouce);
 	pipeline		= new Pipeline(device, swapChain, descriptorSetLayout, renderPass);
 
 	framebuffers	= new Framebuffers(device, renderPass, swapChain);
@@ -149,7 +154,7 @@ void Application::acquireNextSwapChainImageIndex(uint32_t& imageIndex) {
 		imageIsReadyForRenderSemaphores->getSemaphore(currentFrame), VK_NULL_HANDLE, &imageIndex);
 	 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-		//TODO: recreate swapchain due to resize of window
+		windowResize();
 		return;
 	}
 	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -208,9 +213,8 @@ void Application::presentImage(uint32_t* swapChainIndex, VkSemaphore* waitSemaph
 	presentInfo.pResults = nullptr;
 
 	VkResult result = vkQueuePresentKHR(device->getPresentQueue(), &presentInfo);
-	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-		//TODO: recreate swapchain due to resize of window
-	}
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window->isResized())
+		windowResize();
 	else if (result != VK_SUCCESS)
 		throw std::runtime_error("Failed to present swap chain image.");
 }
@@ -222,18 +226,35 @@ void Application::windowResize() {
 		glfwGetFramebufferSize(window->glfwWindow, &width, &height);
 		glfwWaitEvents();
 	}
+	window->setWidth(width);
+	window->setHeight(height);
 	
 	vkDeviceWaitIdle(device->getDevice());
 	cleanupSwapChainRelated();
+	recreateSwapChainRelated();
+	window->resetResized();
 }
 
 void Application::cleanupSwapChainRelated() {
 	delete depthResouce;
 	delete framebuffers;
 	delete drawCommands;
-	delete swapChain;
 	delete uniformBuffers;
 	delete descriptorPool;
 	delete descriptorSets;
+	delete pipeline;
+	delete renderPass;
 	delete swapChain;
+}
+
+void Application::recreateSwapChainRelated() {
+	swapChain = new SwapChain(device, window);
+	uniformBuffers = new UniformBuffers(device, swapChain);
+	descriptorPool = new DescriptorPool(device, swapChain);
+	depthResouce = new DepthResource(device, swapChain, commandPool);
+	renderPass = new RenderPass(device, swapChain, colorResource, depthResouce);
+	pipeline = new Pipeline(device, swapChain, descriptorSetLayout, renderPass);
+	descriptorSets = new DescriptorSets(device, descriptorSetLayout, descriptorPool, uniformBuffers, texture);
+	framebuffers = new Framebuffers(device, renderPass, swapChain);
+	drawCommands = new DrawCommands(device, swapChain, commandPool, renderPass, framebuffers, pipeline, model, descriptorSets);
 }

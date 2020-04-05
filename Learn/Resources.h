@@ -45,4 +45,3 @@ DepthResource::DepthResource(LogicalDevice* inDevice, SwapChain* inSwapChain, Co
 
 	// transitImageLayout(inCommandPool, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
-

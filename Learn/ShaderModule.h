@@ -51,7 +51,3 @@ void ShaderModule::createShaderModule() {
 	if (vkCreateShaderModule(device->getDevice(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
 		throw std::runtime_error("Failed to create shader module.");
 }
-
-ShaderModule::~ShaderModule() {
-	vkDestroyShaderModule(device->getDevice(), shaderModule, nullptr);
-}

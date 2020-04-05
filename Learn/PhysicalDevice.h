@@ -28,7 +28,7 @@ public:
 	QueueFamilyIndices& getQueueFamilyIndices() { return queueFamilyIndices; }
 	uint32_t getGraphicQueueIndex() { return queueFamilyIndices.graphic.value(); }
 	uint32_t getPresentQueueIndex() { return queueFamilyIndices.present.value(); }
-	SwapChainSupportDetails& getSwapChainSupportDetails() { return swapChainSupportDetails; }
+	SwapChainSupportDetails retrieveSwapChainSupportDetails(VkPhysicalDevice candidate, Window* win);
 	VkPhysicalDeviceFeatures& getFeatures() { return features; }
 	VkSampleCountFlagBits getMsaaSamples() { return msaaSamples; }
 	VkFormat retrieveSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
@@ -43,7 +43,6 @@ private:
 	bool isSwapChainSupported(VkPhysicalDevice candidate);
 	bool isPhysicalDeviceFeatureSupported(VkPhysicalDevice candidate);
 	void retrieveQueueFamiliesIndices(VkPhysicalDevice candidate);
-	void retrieveSwapChainSupportDetails(VkPhysicalDevice candidate);
 	VkSampleCountFlagBits retrieveMultisampleCountFlagBits();
 
 	Instance* vkInstance;
@@ -53,7 +52,6 @@ private:
 
 	std::vector<const char*> extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME	};
 	QueueFamilyIndices queueFamilyIndices;
-	SwapChainSupportDetails swapChainSupportDetails;
 	VkPhysicalDeviceFeatures features;
 	VkPhysicalDeviceMemoryProperties memProperties;
 	VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
@@ -143,14 +141,13 @@ bool PhysicalDevice::isExtensionSupported(VkPhysicalDevice candidate) {
 }
 
 bool PhysicalDevice::isSwapChainSupported(VkPhysicalDevice candidate) {
-	retrieveSwapChainSupportDetails(candidate);
+	SwapChainSupportDetails swapChainSupportDetails{};
+	swapChainSupportDetails = retrieveSwapChainSupportDetails(candidate, window);
 	return !swapChainSupportDetails.isEmpty();
 }
 
-void PhysicalDevice::retrieveSwapChainSupportDetails(VkPhysicalDevice candidate) {
-	swapChainSupportDetails.surfaceFormats.clear();
-	swapChainSupportDetails.presentModes.clear();
-
+SwapChainSupportDetails PhysicalDevice::retrieveSwapChainSupportDetails(VkPhysicalDevice candidate, Window* win) {
+	SwapChainSupportDetails swapChainSupportDetails;
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(candidate, window->surface, &swapChainSupportDetails.capabilities);
 
 	uint32_t formatCount;
@@ -166,6 +163,8 @@ void PhysicalDevice::retrieveSwapChainSupportDetails(VkPhysicalDevice candidate)
 		swapChainSupportDetails.presentModes.resize(presentModeCount);
 		vkGetPhysicalDeviceSurfacePresentModesKHR(candidate, window->surface, &presentModeCount, swapChainSupportDetails.presentModes.data());
 	}
+
+	return swapChainSupportDetails;
 }
 
 bool PhysicalDevice::isPhysicalDeviceFeatureSupported(VkPhysicalDevice candidate) {

@@ -30,9 +30,9 @@ protected:
 	uint32_t width, height, mipLevels;
 	VkFormat format = VK_FORMAT_UNDEFINED;
 
-	VkDeviceMemory memory = 0;
-	VkImage image = 0;
-	VkImageView imageView = 0;
+	VkDeviceMemory memory = VK_NULL_HANDLE;
+	VkImage image = VK_NULL_HANDLE;
+	VkImageView imageView = VK_NULL_HANDLE;
 
 private:
 	void createImage(VkSampleCountFlagBits samples, VkImageTiling tiling, VkImageUsageFlags usage);
@@ -44,9 +44,11 @@ private:
 };
 
 ImageResource::~ImageResource() {
-	vkDestroyImageView(device->getDevice(), imageView, nullptr);
-	vkDestroyImage(device->getDevice(), image, nullptr);
-	if (memory != 0)
+	if (imageView != VK_NULL_HANDLE)
+		vkDestroyImageView(device->getDevice(), imageView, nullptr);
+	if (image != VK_NULL_HANDLE)
+		vkDestroyImage(device->getDevice(), image, nullptr);
+	if (memory != VK_NULL_HANDLE)
 		vkFreeMemory(device->getDevice(), memory, nullptr);
 }
 

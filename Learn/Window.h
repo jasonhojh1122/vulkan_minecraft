@@ -7,8 +7,12 @@ class Window {
 public:
 	Window(int w, int h);
 	void setInstanceRef(Instance* ins) { vkInstance = ins; }
+	void setWidth(int inWidth) { width = inWidth; }
+	void setHeight(int inHeight) { height = inHeight; }
 	void createVulkanSurface();
 	void destroyWindow();
+	bool isResized() { return windowResized; }
+	void resetResized() { windowResized = false; }
 
 	Instance* vkInstance;
 	int width, height;
@@ -19,6 +23,11 @@ public:
 
 private:
 	void createGLFWWindow();
+
+	static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
+		auto win = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+		win->windowResized = true;
+	}
 
 };
 
@@ -42,9 +51,4 @@ void Window::createVulkanSurface() {
 void Window::destroyWindow() {
 	vkDestroySurfaceKHR(vkInstance->instance, surface, nullptr);
 	glfwDestroyWindow(glfwWindow);
-}
-
-static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-	auto win = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
-	win->windowResized = true;
 }

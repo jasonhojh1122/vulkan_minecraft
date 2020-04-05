@@ -28,7 +28,7 @@ private:
 
 	LogicalDevice* device;
 	Window* window;
-	SwapChainSupportDetails* supportDetails;
+	SwapChainSupportDetails supportDetails;
 
 
 	VkSwapchainKHR swapChain;
@@ -45,17 +45,15 @@ private:
 };
 
 SwapChain::~SwapChain() {
-	for (uint32_t i = 0; i < imageCount; ++i) {
-		delete imageResources[i];
-		vkDestroyImage(device->getDevice(), images[i], nullptr);
-	}
+	for (uint32_t i = 0; i < imageCount; ++i)
+		vkDestroyImageView(device->getDevice(), imageResources[i]->getImageView(), nullptr);
 	vkDestroySwapchainKHR(device->getDevice(), swapChain, nullptr);
 }
 
 SwapChain::SwapChain(LogicalDevice* inDevice, Window* inWindow) {
 	device = inDevice;
 	window = inWindow;
-	supportDetails = &device->getPhysicalDevice()->getSwapChainSupportDetails();
+	supportDetails = device->getPhysicalDevice()->retrieveSwapChainSupportDetails(device->getPhysicalDevice()->getDevice(), window);
 
 	createSwapChain();
 	createSwapChainImages();
@@ -90,7 +88,7 @@ void SwapChain::createSwapChain() {
 		createInfo.queueFamilyIndexCount = 0;
 		createInfo.pQueueFamilyIndices = nullptr;
 	}
-	createInfo.preTransform = supportDetails->capabilities.currentTransform;
+	createInfo.preTransform = supportDetails.capabilities.currentTransform;
 	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	createInfo.presentMode = presentMode;
 	createInfo.clipped = VK_TRUE;
@@ -101,25 +99,25 @@ void SwapChain::createSwapChain() {
 }
 
 void SwapChain::selectPresentMode() {
-	for (const auto& available : supportDetails->presentModes)
+	for (const auto& available : supportDetails.presentModes)
 		if (available == VK_PRESENT_MODE_MAILBOX_KHR)
 			presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
 	presentMode = VK_PRESENT_MODE_FIFO_KHR;
 }
 
 void SwapChain::selectSurfaceFormat() {
-	for (const auto& available : supportDetails->surfaceFormats){
+	for (const auto& available : supportDetails.surfaceFormats){
 		if (available.format == VK_FORMAT_B8G8R8A8_UNORM && available.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
 			format = available.format;
 			colorSpace = available.colorSpace;
 		}
 	}
-	format = supportDetails->surfaceFormats[0].format;
-	colorSpace = supportDetails->surfaceFormats[0].colorSpace;
+	format = supportDetails.surfaceFormats[0].format;
+	colorSpace = supportDetails.surfaceFormats[0].colorSpace;
 }
 
 void SwapChain::retrieveExtent() {
-	VkSurfaceCapabilitiesKHR capabilities = device->getPhysicalDevice()->getSwapChainSupportDetails().capabilities;
+	VkSurfaceCapabilitiesKHR capabilities = supportDetails.capabilities;
 	if (capabilities.currentExtent.width != UINT32_MAX) {
 		extent = capabilities.currentExtent;
 	}
@@ -134,9 +132,9 @@ void SwapChain::retrieveExtent() {
 }
 
 void SwapChain::retrieveSwapChainImageCount() {
-	imageCount = supportDetails->capabilities.minImageCount + 1;
-	if (supportDetails->capabilities.maxImageCount > 0 && imageCount > supportDetails->capabilities.maxImageCount)
-		imageCount = supportDetails->capabilities.maxImageCount;
+	imageCount = supportDetails.capabilities.minImageCount + 1;
+	if (supportDetails.capabilities.maxImageCount > 0 && imageCount > supportDetails.capabilities.maxImageCount)
+		imageCount = supportDetails.capabilities.maxImageCount;
 }
 
 void SwapChain::createSwapChainImages() {

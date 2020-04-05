@@ -81,7 +81,7 @@ void DrawCommands::recordCommands() {
 		commandBuffers[i]->beginCommands();
 
 		vkCmdBeginRenderPass(commandBuffers[i]->getCommandBuffer(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
+		/*
 		VkViewport viewport{};
 		viewport.height = swapChain->getExtent().height;
 		viewport.width = swapChain->getExtent().width;
@@ -93,7 +93,7 @@ void DrawCommands::recordCommands() {
 		scissor.extent = swapChain->getExtent();
 		scissor.offset = { 0, 0 };
 		vkCmdSetScissor(commandBuffers[i]->getCommandBuffer(), 0, 1, &scissor);
-
+		*/
 		vkCmdBindPipeline(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipeline());
 		
 		VkBuffer vertexBuffers[] = { model->getVertexBufferRef()->getBuffer() };

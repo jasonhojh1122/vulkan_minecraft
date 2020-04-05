@@ -48,6 +48,7 @@ Model::Model(LogicalDevice* inDevice, std::string path, CommandPool* inCommandPo
 }
 
 void Model::loadModel(std::string path) {
+	std::cout << "Loading model\n";
 	std::string warn, err;
 	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str()))
 		throw std::runtime_error("Failed to load model.");
@@ -79,6 +80,7 @@ void Model::loadModel(std::string path) {
 			indices.push_back(uniqueVertices[vertex]);
 		}
 	}
+	std::cout << "Finished loading model.\n";
 }
 
 void Model::createVertexBuffer() {

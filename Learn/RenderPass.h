@@ -6,7 +6,7 @@
 class RenderPass {
 public:
 	~RenderPass();
-	RenderPass(LogicalDevice* logicalDevice, ColorResource* colorResource, DepthResource* depthResource);
+	RenderPass(LogicalDevice* logicalDevice, SwapChain* swapChain, ColorResource* colorResource, DepthResource* depthResource);
 	void createRenderPass();
 	VkRenderPass& getRenderPass() { return renderPass; }
 	ColorResource* getColorResourceRef() { return colorResource; }
@@ -14,6 +14,7 @@ public:
 	
 private:
 	LogicalDevice* device;
+	SwapChain* swapChain;
 	ColorResource* colorResource;
 	DepthResource* depthResource;
 	VkRenderPass renderPass;
@@ -24,8 +25,9 @@ RenderPass::~RenderPass() {
 	vkDestroyRenderPass(device->getDevice(), renderPass, nullptr);
 }
 
-RenderPass::RenderPass(LogicalDevice* inDevice, ColorResource* inColorResource, DepthResource* inDepthResource) {
+RenderPass::RenderPass(LogicalDevice* inDevice, SwapChain* inSwapChain, ColorResource* inColorResource, DepthResource* inDepthResource) {
 	device = inDevice;
+	swapChain = inSwapChain;
 	colorResource = inColorResource;
 	depthResource = inDepthResource;
 	createRenderPass();
@@ -34,7 +36,7 @@ RenderPass::RenderPass(LogicalDevice* inDevice, ColorResource* inColorResource, 
 void RenderPass::createRenderPass() {
 	std::array<VkAttachmentDescription, 2> attachments;
 
-	attachments[0].format = colorResource->getFormat();
+	attachments[0].format = swapChain->getFormat();
 	attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
 	attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;

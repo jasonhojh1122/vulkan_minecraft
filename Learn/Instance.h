@@ -6,6 +6,7 @@
 
 class Instance {
 public:
+	~Instance();
 	Instance(ValidationDebugger* debugger);
 	void destroyInstance() { vkDestroyInstance(instance, nullptr); };
 	VkInstance instance;
@@ -20,6 +21,10 @@ private:
 	ValidationDebugger* debugger;
 	std::vector<const char*> extensions;
 };
+
+Instance::~Instance() {
+	vkDestroyInstance(instance, nullptr);
+}
 
 Instance::Instance(ValidationDebugger* inDebugger) {
 	debugger = inDebugger;

@@ -4,6 +4,7 @@
 
 class DescriptorPool {
 public:
+	~DescriptorPool();
 	DescriptorPool(LogicalDevice* device, SwapChain* swapChain);
 	VkDescriptorPool& getPool() { return pool; }
 	SwapChain* getSwapChainRef() { return swapChain; }
@@ -14,6 +15,10 @@ private:
 	SwapChain* swapChain;
 	VkDescriptorPool pool;
 };
+
+DescriptorPool::~DescriptorPool() {
+	vkDestroyDescriptorPool(device->getDevice(), pool, nullptr);
+}
 
 DescriptorPool::DescriptorPool(LogicalDevice* inDevice, SwapChain* inSwapChain) {
 	device = inDevice;

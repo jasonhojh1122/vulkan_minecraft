@@ -5,6 +5,7 @@
 
 class RenderPass {
 public:
+	~RenderPass();
 	RenderPass(LogicalDevice* logicalDevice, ColorResource* colorResource, DepthResource* depthResource);
 	void createRenderPass();
 	VkRenderPass& getRenderPass() { return renderPass; }
@@ -18,6 +19,10 @@ private:
 	VkRenderPass renderPass;
 
 };
+
+RenderPass::~RenderPass() {
+	vkDestroyRenderPass(device->getDevice(), renderPass, nullptr);
+}
 
 RenderPass::RenderPass(LogicalDevice* inDevice, ColorResource* inColorResource, DepthResource* inDepthResource) {
 	device = inDevice;

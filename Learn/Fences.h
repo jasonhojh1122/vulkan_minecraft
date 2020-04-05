@@ -4,6 +4,7 @@
 
 class Fences {
 public:
+	~Fences();
 	Fences(LogicalDevice* device, int num);
 	VkFence& getFence(int index) { return fences[index]; }
 	void setFence(VkFence inFence, int index) { fences[index] = inFence; }
@@ -15,6 +16,11 @@ private:
 	int num;
 	std::vector<VkFence> fences;
 };
+
+Fences::~Fences() {
+	for (int i = 0; i < num; ++i)
+		vkDestroyFence(device->getDevice(), fences[i], nullptr);
+}
 
 Fences::Fences(LogicalDevice* inDevice, int inNum) {
 	device = inDevice;

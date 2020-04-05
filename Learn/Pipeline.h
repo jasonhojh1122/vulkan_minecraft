@@ -9,6 +9,7 @@
 
 class Pipeline {
 public:
+	~Pipeline();
 	Pipeline(LogicalDevice* device, SwapChain* swapChain, DescriptorSetLayout* descriptorSetLayout, RenderPass* renderPass);
 	VkPipelineLayout& getPipelineLayout() { return layout; }
 	VkPipeline& getPipeline() { return pipeline; }
@@ -38,6 +39,11 @@ private:
 	VkPipelineLayout layout;
 	VkPipeline pipeline;
 };
+
+Pipeline::~Pipeline() {
+	vkDestroyPipelineLayout(device->getDevice(), layout, nullptr);
+	vkDestroyPipeline(device->getDevice(), pipeline, nullptr);
+}
 
 Pipeline::Pipeline(LogicalDevice* inDevice, SwapChain* inSwapChain, DescriptorSetLayout* inDescriptorSetLayout, RenderPass* inRenderPass) {
 	device = inDevice;
@@ -69,6 +75,14 @@ void Pipeline::createGraphicsPipeline() {
 	VkRect2D scissor{};
 	setupViewportStateCreateInfo(viewportState, viewport, scissor);
 
+	std::vector<VkDynamicState> dynamicStateEnables;
+	dynamicStateEnables.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+	dynamicStateEnables.push_back(VK_DYNAMIC_STATE_SCISSOR);
+	VkPipelineDynamicStateCreateInfo dynamicState{};
+	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStateEnables.size());
+	dynamicState.pDynamicStates = dynamicStateEnables.data();
+
 	VkPipelineRasterizationStateCreateInfo rasterization{};
 	setupRasterizationStateCreateInfo(rasterization);
 
@@ -96,7 +110,7 @@ void Pipeline::createGraphicsPipeline() {
 	pipelineInfo.pMultisampleState = &multisample;
 	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.pColorBlendState = &colorBlend;
-	pipelineInfo.pDynamicState = nullptr;
+	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = layout;
 	pipelineInfo.renderPass = renderPass->getRenderPass();
 	pipelineInfo.subpass = 0;
@@ -206,16 +220,14 @@ void Pipeline::setupColorBlendAttachmentState(VkPipelineColorBlendAttachmentStat
 
 void Pipeline::createPipelineLayout() {
 	VkPipelineLayoutCreateInfo layoutCreateInfo{};
-	setupLayoutCreateInfo(layoutCreateInfo);
+	layoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	layoutCreateInfo.setLayoutCount = 1;
+	layoutCreateInfo.pSetLayouts = &descriptorSetLayout->getLayout();
+	layoutCreateInfo.pushConstantRangeCount = 0;
+	layoutCreateInfo.pPushConstantRanges = nullptr;;
+
 	if (vkCreatePipelineLayout(device->getDevice(), &layoutCreateInfo, nullptr, &layout) != VK_SUCCESS)
 		throw std::runtime_error("Failed to create pipeline layout");
 }
 
-void Pipeline::setupLayoutCreateInfo(VkPipelineLayoutCreateInfo& createInfo) {
-	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	createInfo.setLayoutCount = 1;
-	createInfo.pSetLayouts = &descriptorSetLayout->getLayout();
-	createInfo.pushConstantRangeCount = 0;
-	createInfo.pPushConstantRanges = nullptr;
-}
 

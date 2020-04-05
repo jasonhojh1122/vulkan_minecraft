@@ -5,9 +5,9 @@
 
 class ColorResource : public ImageResource {
 public:
+	~ColorResource() {};
 	ColorResource(LogicalDevice* device, SwapChain* swapChain, CommandPool* commandPool);
 };
-
 ColorResource::ColorResource(LogicalDevice* inDevice, SwapChain* inSwapChain, CommandPool* inCommandPool) :
 	ImageResource(inDevice, inSwapChain->getExtent().width, inSwapChain->getExtent().height, 1) {
 	
@@ -23,6 +23,7 @@ ColorResource::ColorResource(LogicalDevice* inDevice, SwapChain* inSwapChain, Co
 
 class DepthResource : public ImageResource {
 public:
+	~DepthResource() {}
 	DepthResource(LogicalDevice* inDevice, SwapChain* inSwapChain, CommandPool* commandPool);
 };
 

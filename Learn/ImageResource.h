@@ -5,6 +5,7 @@
 
 class ImageResource {
 public:
+	virtual ~ImageResource();
 	ImageResource(LogicalDevice* device);
 	ImageResource(LogicalDevice* device, uint32_t width, uint32_t height, uint32_t mipLevels);
 
@@ -29,9 +30,9 @@ protected:
 	uint32_t width, height, mipLevels;
 	VkFormat format = VK_FORMAT_UNDEFINED;
 
-	VkDeviceMemory memory;
-	VkImage image;
-	VkImageView imageView;
+	VkDeviceMemory memory = 0;
+	VkImage image = 0;
+	VkImageView imageView = 0;
 
 private:
 	void createImage(VkSampleCountFlagBits samples, VkImageTiling tiling, VkImageUsageFlags usage);
@@ -41,6 +42,13 @@ private:
 		VkImageLayout oldLayout, VkImageLayout newLayout);
 
 };
+
+ImageResource::~ImageResource() {
+	vkDestroyImageView(device->getDevice(), imageView, nullptr);
+	vkDestroyImage(device->getDevice(), image, nullptr);
+	if (memory != 0)
+		vkFreeMemory(device->getDevice(), memory, nullptr);
+}
 
 ImageResource::ImageResource(LogicalDevice* inDevice) {
 	device = inDevice;

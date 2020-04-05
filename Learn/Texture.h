@@ -8,6 +8,7 @@
 
 class Texture : public ImageResource {
 public:
+	~Texture();
 	Texture(LogicalDevice* device, std::string path, CommandPool* commandPool);
 	VkSampler& getSampler() { return sampler; }
 
@@ -30,6 +31,10 @@ private:
 
 	VkSampler sampler;
 };
+
+Texture::~Texture() {
+	vkDestroySampler(device->getDevice(), sampler, nullptr);
+}
 
 Texture::Texture(LogicalDevice* inDevice, std::string path, CommandPool* inCommandPool) : ImageResource(inDevice) {
 	device = inDevice;

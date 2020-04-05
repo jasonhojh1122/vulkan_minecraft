@@ -5,6 +5,7 @@
 
 class LogicalDevice {
 public:
+	~LogicalDevice();
 	LogicalDevice(PhysicalDevice* phyDevice, ValidationDebugger* debugger);
 	VkDevice& getDevice() { return device; }
 	VkQueue& getGraphicQueue() { return graphicQueue; }
@@ -24,6 +25,10 @@ private:
 	VkQueue graphicQueue;
 	VkQueue presentQueue;
 };
+
+LogicalDevice::~LogicalDevice() {
+	vkDestroyDevice(device, nullptr);
+}
 
 LogicalDevice::LogicalDevice(PhysicalDevice* inPhysicalDevice, ValidationDebugger* inDebugger) {
 	physicalDevice = inPhysicalDevice;

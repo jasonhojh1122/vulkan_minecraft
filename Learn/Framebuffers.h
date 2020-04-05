@@ -6,6 +6,7 @@
 
 class Framebuffers {
 public:
+	~Framebuffers();
 	Framebuffers(LogicalDevice* device, RenderPass* renderPass, SwapChain* swapChain);
 	VkFramebuffer& getFrameBuffer(size_t index) { return framebuffers[index]; }
 
@@ -26,10 +27,15 @@ Framebuffers::Framebuffers(LogicalDevice* inDevice, RenderPass* inRenderPass, Sw
 	createFramebuffers();
 }
 
+Framebuffers::~Framebuffers() {
+	for (uint32_t i = 0; i < swapChain->getImageCount(); ++i)
+		vkDestroyFramebuffer(device->getDevice(), framebuffers[i], nullptr);
+}
+
 void Framebuffers::createFramebuffers() {
 	framebuffers.resize(swapChain->getImageCount());
 
-	for (int i = 0; i < swapChain->getImageCount(); ++i) {
+	for (uint32_t i = 0; i < swapChain->getImageCount(); ++i) {
 		std::array<VkImageView, 2> attachments = {
 			swapChain->getSwapChainResourcesRef(i)->getImageView(),
 			renderPass->getDepthResourceRef()->getImageView()

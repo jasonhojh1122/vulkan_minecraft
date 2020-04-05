@@ -10,6 +10,7 @@
 
 class Model {
 public:
+	~Model();
 	Model(LogicalDevice* device, std::string path, CommandPool* commandPool);
 	Buffer* getVertexBufferRef() { return vertexBuffer; }
 	Buffer* getIndexBufferRef() { return indexBuffer; }
@@ -32,6 +33,11 @@ private:
 	Buffer* vertexBuffer;
 	Buffer* indexBuffer;
 };
+
+Model::~Model() {
+	delete vertexBuffer;
+	delete indexBuffer;
+}
 
 Model::Model(LogicalDevice* inDevice, std::string path, CommandPool* inCommandPool) {
 	device = inDevice;

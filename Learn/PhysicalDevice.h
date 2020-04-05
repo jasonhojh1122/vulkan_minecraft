@@ -22,6 +22,7 @@ struct SwapChainSupportDetails {
 
 class PhysicalDevice {
 public:
+	~PhysicalDevice() {};
 	PhysicalDevice(Instance* instance, Window* win);
 	VkPhysicalDevice& getDevice() { return device; }
 	QueueFamilyIndices& getQueueFamilyIndices() { return queueFamilyIndices; }
@@ -32,7 +33,6 @@ public:
 	VkSampleCountFlagBits getMsaaSamples() { return msaaSamples; }
 	VkFormat retrieveSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 	uint32_t retrieveMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-
 
 private:
 	std::vector<VkPhysicalDevice> retrievePossiblePhysicalDevice();

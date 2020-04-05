@@ -18,6 +18,7 @@ struct UniformBufferObject {
 
 class UniformBuffers {
 public:
+	~UniformBuffers();
 	UniformBuffers(LogicalDevice* device, SwapChain* swapChain);
 	Buffer* getBufferRef(size_t index) { return buffers[index]; }
 
@@ -28,6 +29,11 @@ private:
 	SwapChain* swapChain;
 	std::vector<Buffer*> buffers;
 };
+
+UniformBuffers::~UniformBuffers() {
+	for (uint32_t i = 0; i < swapChain->getImageCount(); ++i)
+		delete buffers[i];
+}
 
 UniformBuffers::UniformBuffers(LogicalDevice* inDevice, SwapChain* inSwapChain) {
 	device = inDevice;

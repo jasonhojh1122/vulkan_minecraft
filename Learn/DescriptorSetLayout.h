@@ -4,6 +4,7 @@
 
 class DescriptorSetLayout {
 public:
+	~DescriptorSetLayout();
 	DescriptorSetLayout(LogicalDevice* device);
 	VkDescriptorSetLayout& getLayout() { return layout; }
 
@@ -13,6 +14,10 @@ private:
 	LogicalDevice* device;
 	VkDescriptorSetLayout layout;
 };
+
+DescriptorSetLayout::~DescriptorSetLayout() {
+	vkDestroyDescriptorSetLayout(device->getDevice(), layout, nullptr);
+}
 
 DescriptorSetLayout::DescriptorSetLayout(LogicalDevice* inDevice) {
 	device = inDevice;

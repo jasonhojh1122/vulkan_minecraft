@@ -5,9 +5,9 @@
 #include "Window.h"
 #include "ImageResource.h"
 
-
 class SwapChain {
 public:
+	~SwapChain();
 	SwapChain(LogicalDevice* device, Window* window);
 	VkSwapchainKHR& getSwapChain() { return swapChain; }
 	VkFormat getFormat() { return format; }
@@ -25,6 +25,7 @@ private:
 	void createSwapChainImages();
 	void createSwapChainImageViews();
 
+
 	LogicalDevice* device;
 	Window* window;
 	SwapChainSupportDetails* supportDetails;
@@ -39,7 +40,17 @@ private:
 	VkColorSpaceKHR colorSpace;
 	VkExtent2D extent;
 	uint32_t imageCount;
+
+	bool framebufferResized = false;
 };
+
+SwapChain::~SwapChain() {
+	for (uint32_t i = 0; i < imageCount; ++i) {
+		delete imageResources[i];
+		vkDestroyImage(device->getDevice(), images[i], nullptr);
+	}
+	vkDestroySwapchainKHR(device->getDevice(), swapChain, nullptr);
+}
 
 SwapChain::SwapChain(LogicalDevice* inDevice, Window* inWindow) {
 	device = inDevice;

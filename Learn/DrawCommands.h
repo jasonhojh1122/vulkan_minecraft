@@ -11,6 +11,7 @@
 
 class DrawCommands {
 public:
+	~DrawCommands();
 	DrawCommands(LogicalDevice* device, SwapChain* swapChain, CommandPool* commandPool, 
 		RenderPass* renderPass, Framebuffers* framebuffers, Pipeline* pipeline, Model* model, DescriptorSets* descriptorSets);
 	CommandBuffer* getCommandBufferRef(uint32_t index) { return commandBuffers[index]; }
@@ -31,6 +32,11 @@ private:
 
 	std::vector<CommandBuffer*> commandBuffers;
 };
+
+DrawCommands::~DrawCommands() {
+	for (uint32_t i = 0; i < swapChain->getImageCount(); ++i)
+		delete commandBuffers[i];
+}
 
 DrawCommands::DrawCommands(LogicalDevice* inDevice, SwapChain* inSwapChain, CommandPool* inCommandPool, 
 	RenderPass* inRenderPass, Framebuffers* inFramebuffers, Pipeline* inPipeline, Model* inModel, DescriptorSets* inDescriptorSets) {
@@ -75,6 +81,18 @@ void DrawCommands::recordCommands() {
 		commandBuffers[i]->beginCommands();
 
 		vkCmdBeginRenderPass(commandBuffers[i]->getCommandBuffer(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		VkViewport viewport{};
+		viewport.height = swapChain->getExtent().height;
+		viewport.width = swapChain->getExtent().width;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(commandBuffers[i]->getCommandBuffer(), 0, 1, &viewport);
+
+		VkRect2D scissor{};
+		scissor.extent = swapChain->getExtent();
+		scissor.offset = { 0, 0 };
+		vkCmdSetScissor(commandBuffers[i]->getCommandBuffer(), 0, 1, &scissor);
 
 		vkCmdBindPipeline(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipeline());
 		

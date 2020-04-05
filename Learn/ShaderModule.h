@@ -19,6 +19,11 @@ private:
 	VkShaderModule shaderModule;
 };
 
+ShaderModule::~ShaderModule() {
+	vkDestroyShaderModule(device->getDevice(), shaderModule, nullptr);
+}
+
+
 ShaderModule::ShaderModule(LogicalDevice* inDevice, const std::string filename) {
 	device = inDevice;
 	readFile(filename);

@@ -7,6 +7,7 @@
 
 class DescriptorSets {
 public:
+	~DescriptorSets();
 	DescriptorSets(LogicalDevice* logicalDevice, DescriptorSetLayout* layout, 
 		DescriptorPool* descriptorPool, UniformBuffers* uniformBuffers, Texture* texture);
 	VkDescriptorSetLayout& getLayout() { return layout->getLayout(); }

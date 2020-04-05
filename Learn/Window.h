@@ -15,8 +15,11 @@ public:
 	GLFWwindow* glfwWindow;
 	VkSurfaceKHR surface;
 
+	bool windowResized = false;
+
 private:
 	void createGLFWWindow();
+
 };
 
 Window::Window(int w, int h) : width(w), height(h){
@@ -28,8 +31,7 @@ void Window::createGLFWWindow() {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindow = glfwCreateWindow(width, height, "Vulkan Test", nullptr, nullptr);
 	glfwSetWindowUserPointer(glfwWindow, this);
-	// TODO: deal with frame buffer resize
-	// glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+	glfwSetFramebufferSizeCallback(glfwWindow, framebufferResizeCallback);
 }
 
 void Window::createVulkanSurface() {
@@ -40,4 +42,9 @@ void Window::createVulkanSurface() {
 void Window::destroyWindow() {
 	vkDestroySurfaceKHR(vkInstance->instance, surface, nullptr);
 	glfwDestroyWindow(glfwWindow);
+}
+
+static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
+	auto win = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+	win->windowResized = true;
 }

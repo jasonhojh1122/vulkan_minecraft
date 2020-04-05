@@ -40,6 +40,8 @@ private:
 	void submitDrawCommands(VkSubmitInfo& submitInfo);
 	void presentImage(uint32_t* swapChainIndex, VkSemaphore* waitSemaphore);
 
+	void windowResize();
+	void cleanupSwapChainRelated();
 
 	Window* window;
 	ValidationDebugger* debugger;
@@ -87,7 +89,7 @@ void Application::init() {
 	commandPool		= new CommandPool(device);
 	descriptorPool	= new DescriptorPool(device, swapChain);
 
-	colorResource	= new ColorResource(device, swapChain, commandPool);
+	colorResource	= nullptr;
 	depthResouce	= new DepthResource(device, swapChain, commandPool);
 
 	descriptorSetLayout = new DescriptorSetLayout(device);
@@ -211,4 +213,27 @@ void Application::presentImage(uint32_t* swapChainIndex, VkSemaphore* waitSemaph
 	}
 	else if (result != VK_SUCCESS)
 		throw std::runtime_error("Failed to present swap chain image.");
+}
+
+void Application::windowResize() {
+	int width = 0, height = 0;
+	glfwGetFramebufferSize(window->glfwWindow, &width, &height);
+	while (width == 0 || height == 0) {
+		glfwGetFramebufferSize(window->glfwWindow, &width, &height);
+		glfwWaitEvents();
+	}
+	
+	vkDeviceWaitIdle(device->getDevice());
+	cleanupSwapChainRelated();
+}
+
+void Application::cleanupSwapChainRelated() {
+	delete depthResouce;
+	delete framebuffers;
+	delete drawCommands;
+	delete swapChain;
+	delete uniformBuffers;
+	delete descriptorPool;
+	delete descriptorSets;
+	delete swapChain;
 }

@@ -11,7 +11,6 @@ public:
 
 private:
 	void createFramebuffers();
-	void setupFramebufferCreateInfo(VkFramebufferCreateInfo& createInfo, std::array<VkImageView, 3>& attachments);
 
 	std::vector<VkFramebuffer> framebuffers;
 
@@ -30,26 +29,22 @@ Framebuffers::Framebuffers(LogicalDevice* inDevice, RenderPass* inRenderPass, Sw
 void Framebuffers::createFramebuffers() {
 	framebuffers.resize(swapChain->getImageCount());
 
-	for (uint32_t i = 0; i < swapChain->getImageCount(); ++i) {
-		std::array<VkImageView, 3> attachments = { 
-			renderPass->getColorResourceRef()->getImageView(), 
-			renderPass->getDepthResourceRef()->getImageView(), 
-			swapChain->getSwapChainResources()[i]->getImageView() };
+	for (int i = 0; i < swapChain->getImageCount(); ++i) {
+		std::array<VkImageView, 2> attachments = {
+			swapChain->getSwapChainResourcesRef(i)->getImageView(),
+			renderPass->getDepthResourceRef()->getImageView()
+		};
 		
 		VkFramebufferCreateInfo framebufferCreateInfo{};
-		setupFramebufferCreateInfo(framebufferCreateInfo, attachments);
+		framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferCreateInfo.renderPass = renderPass->getRenderPass();
+		framebufferCreateInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		framebufferCreateInfo.pAttachments = attachments.data();
+		framebufferCreateInfo.width = swapChain->getExtent().width;
+		framebufferCreateInfo.height = swapChain->getExtent().height;
+		framebufferCreateInfo.layers = 1;
 
 		if (vkCreateFramebuffer(device->getDevice(), &framebufferCreateInfo, nullptr, &framebuffers[i]) != VK_SUCCESS)
 			throw std::runtime_error("Failed to create frame buffer.");
 	}
-}
-
-void Framebuffers::setupFramebufferCreateInfo(VkFramebufferCreateInfo& createInfo, std::array<VkImageView, 3>& attachments) {
-	createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	createInfo.renderPass = renderPass->getRenderPass();
-	createInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-	createInfo.pAttachments = attachments.data();
-	createInfo.width = swapChain->getExtent().width;
-	createInfo.height = swapChain->getExtent().height;
-	createInfo.layers = 1;
 }

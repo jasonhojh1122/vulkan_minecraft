@@ -13,6 +13,7 @@ public:
 	Model(LogicalDevice* device, std::string path, CommandPool* commandPool);
 	Buffer* getVertexBufferRef() { return vertexBuffer; }
 	Buffer* getIndexBufferRef() { return indexBuffer; }
+	uint32_t getIndicesCount() { return static_cast<uint32_t>(indices.size()); }
 	
 private:
 	void loadModel(std::string path);
@@ -36,7 +37,8 @@ Model::Model(LogicalDevice* inDevice, std::string path, CommandPool* inCommandPo
 	device = inDevice;
 	commandPool = inCommandPool;
 	loadModel(path);
-
+	createVertexBuffer();
+	createIndexBuffer();
 }
 
 void Model::loadModel(std::string path) {

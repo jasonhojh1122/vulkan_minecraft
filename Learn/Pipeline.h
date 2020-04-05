@@ -4,12 +4,12 @@
 #include "ShaderModule.h"
 #include "Vertex.h"
 #include "SwapChain.h"
-#include "DescriptorSets.h"
+#include "DescriptorSetLayout.h"
 #include "RenderPass.h"
 
 class Pipeline {
 public:
-	Pipeline(LogicalDevice* device, SwapChain* swapChain, DescriptorSets* descriptorSets, RenderPass* renderPass);
+	Pipeline(LogicalDevice* device, SwapChain* swapChain, DescriptorSetLayout* descriptorSetLayout, RenderPass* renderPass);
 	VkPipelineLayout& getPipelineLayout() { return layout; }
 	VkPipeline& getPipeline() { return pipeline; }
 
@@ -33,16 +33,16 @@ private:
 
 	LogicalDevice* device;
 	SwapChain* swapChain;
-	DescriptorSets* descriptorSets;
+	DescriptorSetLayout* descriptorSetLayout;
 	RenderPass* renderPass;
 	VkPipelineLayout layout;
 	VkPipeline pipeline;
 };
 
-Pipeline::Pipeline(LogicalDevice* inDevice, SwapChain* inSwapChain, DescriptorSets* inDescriptorSets, RenderPass* inRenderPass) {
+Pipeline::Pipeline(LogicalDevice* inDevice, SwapChain* inSwapChain, DescriptorSetLayout* inDescriptorSetLayout, RenderPass* inRenderPass) {
 	device = inDevice;
 	swapChain = inSwapChain;
-	descriptorSets = inDescriptorSets;
+	descriptorSetLayout = inDescriptorSetLayout;
 	renderPass = inRenderPass;
 	createGraphicsPipeline();
 }
@@ -72,11 +72,12 @@ void Pipeline::createGraphicsPipeline() {
 	VkPipelineRasterizationStateCreateInfo rasterization{};
 	setupRasterizationStateCreateInfo(rasterization);
 
+	VkPipelineMultisampleStateCreateInfo multisample{};
+	setupMultisampleStateCreateInfo(multisample);
+
 	VkPipelineDepthStencilStateCreateInfo depthStencil{};
 	setupDepthStencilStateCreateInfo(depthStencil);
 
-	VkPipelineMultisampleStateCreateInfo multisample{};
-	setupMultisampleStateCreateInfo(multisample);
 
 	VkPipelineColorBlendStateCreateInfo colorBlend{};
 	VkPipelineColorBlendAttachmentState colorBlendAttachment{};
@@ -95,11 +96,11 @@ void Pipeline::createGraphicsPipeline() {
 	pipelineInfo.pMultisampleState = &multisample;
 	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.pColorBlendState = &colorBlend;
+	pipelineInfo.pDynamicState = nullptr;
 	pipelineInfo.layout = layout;
 	pipelineInfo.renderPass = renderPass->getRenderPass();
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-	pipelineInfo.basePipelineIndex = -1;
 
 	if (vkCreateGraphicsPipelines(device->getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS)
 		throw std::runtime_error("Failed to create graphics pipeline");
@@ -164,25 +165,22 @@ void Pipeline::setupRasterizationStateCreateInfo(VkPipelineRasterizationStateCre
 	createInfo.depthBiasSlopeFactor = 0.0f;
 }
 
+void Pipeline::setupMultisampleStateCreateInfo(VkPipelineMultisampleStateCreateInfo& createInfo) {
+	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	createInfo.sampleShadingEnable = VK_FALSE;
+	createInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	createInfo.pSampleMask = nullptr;
+	createInfo.alphaToCoverageEnable = VK_FALSE;
+	createInfo.alphaToOneEnable = VK_FALSE;
+}
+
 void Pipeline::setupDepthStencilStateCreateInfo(VkPipelineDepthStencilStateCreateInfo& createInfo) {
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 	createInfo.depthTestEnable = VK_TRUE;
 	createInfo.depthWriteEnable = VK_TRUE;
 	createInfo.depthCompareOp = VK_COMPARE_OP_LESS;
 	createInfo.depthBoundsTestEnable = VK_FALSE;
-	createInfo.minDepthBounds = 0.0f;
-	createInfo.maxDepthBounds = 1.0f;
 	createInfo.stencilTestEnable = VK_FALSE;
-}
-
-void Pipeline::setupMultisampleStateCreateInfo(VkPipelineMultisampleStateCreateInfo& createInfo) {
-	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	createInfo.sampleShadingEnable = VK_TRUE;
-	createInfo.rasterizationSamples = device->getPhysicalDevice()->getMsaaSamples();
-	createInfo.minSampleShading = 0.2f;
-	createInfo.pSampleMask = nullptr;
-	createInfo.alphaToCoverageEnable = VK_FALSE;
-	createInfo.alphaToOneEnable = VK_FALSE;
 }
 
 void Pipeline::setupColorBlendStateCreateInfo(VkPipelineColorBlendStateCreateInfo& createInfo, VkPipelineColorBlendAttachmentState& attachment) {
@@ -204,12 +202,6 @@ void Pipeline::setupColorBlendAttachmentState(VkPipelineColorBlendAttachmentStat
 		VK_COLOR_COMPONENT_B_BIT |
 		VK_COLOR_COMPONENT_A_BIT;
 	attachment.blendEnable = VK_FALSE;
-	attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-	attachment.colorBlendOp = VK_BLEND_OP_ADD;
-	attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-	attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-	attachment.alphaBlendOp = VK_BLEND_OP_ADD;
 }
 
 void Pipeline::createPipelineLayout() {
@@ -222,7 +214,7 @@ void Pipeline::createPipelineLayout() {
 void Pipeline::setupLayoutCreateInfo(VkPipelineLayoutCreateInfo& createInfo) {
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	createInfo.setLayoutCount = 1;
-	createInfo.pSetLayouts = &descriptorSets->getLayout();
+	createInfo.pSetLayouts = &descriptorSetLayout->getLayout();
 	createInfo.pushConstantRangeCount = 0;
 	createInfo.pPushConstantRanges = nullptr;
 }

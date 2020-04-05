@@ -152,16 +152,16 @@
     </ClInclude>
     <ClInclude Include="Application.h" />
     <ClInclude Include="Buffer.h" />
+    <ClInclude Include="DescriptorSetLayout.h" />
     <ClInclude Include="DrawCommands.h" />
     <ClInclude Include="DescriptorPool.h" />
-    <ClInclude Include="Fence.h" />
+    <ClInclude Include="Fences.h" />
     <ClInclude Include="Framebuffers.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Resources.h" />
     <ClInclude Include="CommandBuffer.h" />
     <ClInclude Include="CommandPool.h" />
     <ClInclude Include="DescriptorSets.h" />
-    <ClInclude Include="Image.h" />
     <ClInclude Include="ImageResource.h" />
     <ClInclude Include="Instance.h" />
     <ClInclude Include="LogicalDevice.h" />

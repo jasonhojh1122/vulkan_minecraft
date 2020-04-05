@@ -12,15 +12,6 @@ public:
 	DepthResource* getDepthResourceRef() { return depthResource; }
 	
 private:
-	void setupAttachments(std::vector<VkAttachmentDescription>& descriptions, std::vector<VkAttachmentReference>& references);
-	void setupColorAttachmentDescription(VkAttachmentDescription& description);
-	void setupDepthAttachmentDescription(VkAttachmentDescription& description);
-	void setupResolveAttachmentDescription(VkAttachmentDescription& description);
-	void setupSubpassDescription(VkSubpassDescription& description, std::vector<VkAttachmentReference>& attachmentReference);
-	void setupSubpassDependency(VkSubpassDependency& depenency);
-	void setupRenderPassCreateInfo(VkRenderPassCreateInfo& createInfo, std::vector<VkAttachmentDescription>& descriptions, 
-		VkSubpassDescription& subpass, VkSubpassDependency& dependency);
-
 	LogicalDevice* device;
 	ColorResource* colorResource;
 	DepthResource* depthResource;
@@ -36,97 +27,73 @@ RenderPass::RenderPass(LogicalDevice* inDevice, ColorResource* inColorResource, 
 }
 
 void RenderPass::createRenderPass() {
-	std::vector<VkAttachmentDescription> attachmentDescriptions(3);
-	std::vector<VkAttachmentReference> attachmentReferences(3);
-	setupAttachments(attachmentDescriptions, attachmentReferences);
+	std::array<VkAttachmentDescription, 2> attachments;
+
+	attachments[0].format = colorResource->getFormat();
+	attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	attachments[0].flags = 0;
+
+	attachments[1].format = depthResource->getFormat();
+	attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	attachments[1].flags = 0;
+
+	VkAttachmentReference colorRef{};
+	colorRef.attachment = 0;
+	colorRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference depthRef{};
+	depthRef.attachment = 1;
+	depthRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 	VkSubpassDescription subpassDescription{};
-	setupSubpassDescription(subpassDescription, attachmentReferences);
+	subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpassDescription.colorAttachmentCount = 1;
+	subpassDescription.pColorAttachments = &colorRef;
+	subpassDescription.pDepthStencilAttachment = &depthRef;
+	subpassDescription.inputAttachmentCount = 0;
+	subpassDescription.pInputAttachments = nullptr;
+	subpassDescription.preserveAttachmentCount = 0;
+	subpassDescription.pPreserveAttachments = nullptr;
+	subpassDescription.pResolveAttachments = nullptr;
 
-	VkSubpassDependency depenency{};
-	setupSubpassDependency(depenency);
+	std::array<VkSubpassDependency, 2> dependencies;
+	dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[0].dstSubpass = 0;
+	dependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[0].srcAccessMask = 0;
+	dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-	VkRenderPassCreateInfo createInfo{};
-	setupRenderPassCreateInfo(createInfo, attachmentDescriptions, subpassDescription, depenency);
+	dependencies[1].srcSubpass = 0;
+	dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+	dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[1].dstAccessMask = 0;
+	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-	if (vkCreateRenderPass(device->getDevice(), &createInfo, nullptr, &renderPass) != VK_SUCCESS)
+	VkRenderPassCreateInfo renderPassInfo{};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+	renderPassInfo.pAttachments = attachments.data();
+	renderPassInfo.subpassCount = 1;
+	renderPassInfo.pSubpasses = &subpassDescription;
+	renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
+	renderPassInfo.pDependencies = dependencies.data();
+
+	if (vkCreateRenderPass(device->getDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
 		throw std::runtime_error("Failed to create render pass");
-}
-
-void RenderPass::setupAttachments(std::vector<VkAttachmentDescription>& descriptions, std::vector<VkAttachmentReference>& references) {
-	setupColorAttachmentDescription(descriptions[0]);
-	references[0].attachment = 0;
-	references[0].layout = descriptions[0].finalLayout;
-
-	setupDepthAttachmentDescription(descriptions[1]);
-	references[1].attachment = 1;
-	references[1].layout = descriptions[1].finalLayout;
-
-	setupResolveAttachmentDescription(descriptions[2]);
-	references[2].attachment = 2;
-	references[2].layout = descriptions[2].finalLayout;
-
-}
-
-void RenderPass::setupColorAttachmentDescription(VkAttachmentDescription& description) {
-	description.format = colorResource->getFormat();
-	description.samples = device->getPhysicalDevice()->getMsaaSamples();
-	description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	description.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-}
-
-void RenderPass::setupDepthAttachmentDescription(VkAttachmentDescription& description) {
-	description.format = depthResource->getFormat();
-	description.samples = device->getPhysicalDevice()->getMsaaSamples();
-	description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	description.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	description.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-}
-
-void RenderPass::setupResolveAttachmentDescription(VkAttachmentDescription& description) {
-	description.format = colorResource->getFormat();
-	description.samples = VK_SAMPLE_COUNT_1_BIT;
-	description.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	description.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-}
-
-void RenderPass::setupSubpassDescription(VkSubpassDescription& description, std::vector<VkAttachmentReference>& attachmentReference) {
-	description.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	description.colorAttachmentCount = 1;
-	description.pColorAttachments = &attachmentReference[0];
-	description.pDepthStencilAttachment = &attachmentReference[1];
-	description.pResolveAttachments = &attachmentReference[2];
-}
-
-void RenderPass::setupSubpassDependency(VkSubpassDependency& depenency) {
-	depenency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	depenency.dstSubpass = 0;
-	depenency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	depenency.srcAccessMask = 0;
-	depenency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	depenency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-}
-
-void RenderPass::setupRenderPassCreateInfo(VkRenderPassCreateInfo& createInfo,
-	std::vector<VkAttachmentDescription>& attachments, 
-	VkSubpassDescription& subpass, 
-	VkSubpassDependency& dependency) {
-	createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	createInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-	createInfo.pAttachments = attachments.data();
-	createInfo.subpassCount = 1;
-	createInfo.pSubpasses = &subpass;
-	createInfo.dependencyCount = 1;
-	createInfo.pDependencies = &dependency;
 }

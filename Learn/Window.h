@@ -6,28 +6,20 @@
 class Window {
 public:
 	Window(int w, int h);
-	void setWidth(int w) { width = w; }
-	void setHeight(int h) { height = h; }
 	void setInstanceRef(Instance* ins) { vkInstance = ins; }
 	void createVulkanSurface();
-	int getWidth() { return width; }
-	int getHeight() { return height; }
-	GLFWwindow* getGLFWWIndow() { return glfwWindow; }
-	VkSurfaceKHR& getSurface() { return surface; };
 	void destroyWindow();
+
+	Instance* vkInstance;
+	int width, height;
+	GLFWwindow* glfwWindow;
+	VkSurfaceKHR surface;
 
 private:
 	void createGLFWWindow();
-
-	int width, height;
-	GLFWwindow* glfwWindow;
-	VkSurfaceKHR surface{};
-	Instance* vkInstance;
 };
 
-Window::Window(int w, int h) {
-	width = w;
-	height = h;
+Window::Window(int w, int h) : width(w), height(h){
 	createGLFWWindow();
 }
 
@@ -42,7 +34,7 @@ void Window::createGLFWWindow() {
 
 void Window::createVulkanSurface() {
 	if (glfwCreateWindowSurface(vkInstance->instance, glfwWindow, nullptr, &surface) != VK_SUCCESS)
-		throw std::runtime_error("failed to create window surface.");
+		throw std::runtime_error("Failed to create window surface.");
 }
 
 void Window::destroyWindow() {

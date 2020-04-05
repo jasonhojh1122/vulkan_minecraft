@@ -4,7 +4,8 @@
 
 class Semaphores {
 public:
-	Semaphores(LogicalDevice& device, int num);
+	Semaphores(LogicalDevice* device, int num);
+	VkSemaphore& getSemaphore(int index) { return semaphores[index]; }
 
 private:
 	void createSemaphores();
@@ -14,8 +15,8 @@ private:
 	std::vector<VkSemaphore> semaphores;
 };
 
-Semaphores::Semaphores(LogicalDevice& inDevice, int inNum) {
-	device = &inDevice;
+Semaphores::Semaphores(LogicalDevice* inDevice, int inNum) {
+	device = inDevice;
 	num = inNum;
 	semaphores.resize(num);
 	createSemaphores();

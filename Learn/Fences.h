@@ -4,20 +4,22 @@
 
 class Fences {
 public:
-	Fences(LogicalDevice& device, int num);
+	Fences(LogicalDevice* device, int num);
+	VkFence& getFence(int index) { return fences[index]; }
+	void setFence(VkFence inFence, int index) { fences[index] = inFence; }
+	void createFences();
+	void resetFence(int index) { vkResetFences(device->getDevice(), 1, &fences[index]); }
 
 private:
-	void createFences();
-
 	LogicalDevice* device;
 	int num;
 	std::vector<VkFence> fences;
 };
 
-Fences::Fences(LogicalDevice& inDevice, int inNum) {
-	device = &inDevice;
+Fences::Fences(LogicalDevice* inDevice, int inNum) {
+	device = inDevice;
 	num = inNum;
-	fences.resize(num);
+	fences.resize(num, VK_NULL_HANDLE);
 }
 
 void Fences::createFences() {

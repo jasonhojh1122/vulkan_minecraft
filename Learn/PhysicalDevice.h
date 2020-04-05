@@ -25,11 +25,14 @@ public:
 	PhysicalDevice(Instance* instance, Window* win);
 	VkPhysicalDevice& getDevice() { return device; }
 	QueueFamilyIndices& getQueueFamilyIndices() { return queueFamilyIndices; }
+	uint32_t getGraphicQueueIndex() { return queueFamilyIndices.graphic.value(); }
+	uint32_t getPresentQueueIndex() { return queueFamilyIndices.present.value(); }
 	SwapChainSupportDetails& getSwapChainSupportDetails() { return swapChainSupportDetails; }
 	VkPhysicalDeviceFeatures& getFeatures() { return features; }
 	VkSampleCountFlagBits getMsaaSamples() { return msaaSamples; }
 	VkFormat retrieveSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 	uint32_t retrieveMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
 
 private:
 	std::vector<VkPhysicalDevice> retrievePossiblePhysicalDevice();
@@ -45,7 +48,9 @@ private:
 
 	Instance* vkInstance;
 	Window* window;
+
 	VkPhysicalDevice device = VK_NULL_HANDLE;
+
 	std::vector<const char*> extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME	};
 	QueueFamilyIndices queueFamilyIndices;
 	SwapChainSupportDetails swapChainSupportDetails;
@@ -112,7 +117,7 @@ void PhysicalDevice::retrieveQueueFamiliesIndices(VkPhysicalDevice candidate) {
 			queueFamilyIndices.graphic = index;
 
 		VkBool32 presentSupport = false;
-		vkGetPhysicalDeviceSurfaceSupportKHR(candidate, index, window->getSurface(), &presentSupport);
+		vkGetPhysicalDeviceSurfaceSupportKHR(candidate, index, window->surface, &presentSupport);
 
 		if (presentSupport) 
 			queueFamilyIndices.present = index;
@@ -146,20 +151,20 @@ void PhysicalDevice::retrieveSwapChainSupportDetails(VkPhysicalDevice candidate)
 	swapChainSupportDetails.surfaceFormats.clear();
 	swapChainSupportDetails.presentModes.clear();
 
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(candidate, window->getSurface(), &swapChainSupportDetails.capabilities);
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(candidate, window->surface, &swapChainSupportDetails.capabilities);
 
 	uint32_t formatCount;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(candidate, window->getSurface(), &formatCount, nullptr);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(candidate, window->surface, &formatCount, nullptr);
 	if (formatCount != 0) {
 		swapChainSupportDetails.surfaceFormats.resize(formatCount);
-		vkGetPhysicalDeviceSurfaceFormatsKHR(candidate, window->getSurface(), &formatCount, swapChainSupportDetails.surfaceFormats.data());
+		vkGetPhysicalDeviceSurfaceFormatsKHR(candidate, window->surface, &formatCount, swapChainSupportDetails.surfaceFormats.data());
 	}
 
 	uint32_t presentModeCount;
-	vkGetPhysicalDeviceSurfacePresentModesKHR(candidate, window->getSurface(), &presentModeCount, nullptr);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(candidate, window->surface, &presentModeCount, nullptr);
 	if (presentModeCount != 0) {
 		swapChainSupportDetails.presentModes.resize(presentModeCount);
-		vkGetPhysicalDeviceSurfacePresentModesKHR(candidate, window->getSurface(), &presentModeCount, swapChainSupportDetails.presentModes.data());
+		vkGetPhysicalDeviceSurfacePresentModesKHR(candidate, window->surface, &presentModeCount, swapChainSupportDetails.presentModes.data());
 	}
 }
 

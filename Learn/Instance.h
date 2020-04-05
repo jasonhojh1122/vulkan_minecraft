@@ -11,13 +11,13 @@ public:
 	VkInstance instance;
 
 private:
-	ValidationDebugger* debugger;
 	void retrieveRequiredExtensions();
 
 	void createInstance();
 	void setupApplicationInfo(VkApplicationInfo& appInfo);
 	void setupInstanceCreateInfo(VkInstanceCreateInfo& createInfo, VkApplicationInfo& appInfo);
 
+	ValidationDebugger* debugger;
 	std::vector<const char*> extensions;
 };
 
@@ -76,5 +76,4 @@ void Instance::retrieveRequiredExtensions() {
 
 	if (debugger->isEnable())
 		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-
 }

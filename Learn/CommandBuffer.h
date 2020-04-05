@@ -78,7 +78,8 @@ void CommandBuffer::endSingalTimeCommands() {
 void CommandBuffer::beginCommands() {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = 0;
+	beginInfo.pNext = nullptr;
+	beginInfo.pInheritanceInfo = nullptr;
 
 	if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
 		throw std::runtime_error("Failed to begin command buffer.");

@@ -25,6 +25,7 @@ const int MAX_IN_FLIGHT = 2;
 
 class Application {
 public:
+	~Application() {};
 	Application();
 	void run();
 
@@ -32,6 +33,7 @@ public:
 
 private:
 	void init();
+	void cleanup();
 
 	void drawFrame();
 	void acquireNextSwapChainImageIndex(uint32_t& imageIndex);
@@ -119,11 +121,13 @@ void Application::init() {
 }
 
 void Application::run() {
+	std::cout << "Start rendering.\n";
 	while (!glfwWindowShouldClose(window->glfwWindow)) {
 		glfwPollEvents();
 		drawFrame();
 	}
 	vkDeviceWaitIdle(device->getDevice());
+	cleanup();
 }
 
 void Application::drawFrame() {
@@ -242,7 +246,6 @@ void Application::cleanupSwapChainRelated() {
 	delete uniformBuffers;
 	delete descriptorPool;
 	delete descriptorSets;
-	delete pipeline;
 	delete renderPass;
 	delete swapChain;
 }
@@ -253,8 +256,24 @@ void Application::recreateSwapChainRelated() {
 	descriptorPool = new DescriptorPool(device, swapChain);
 	depthResouce = new DepthResource(device, swapChain, commandPool);
 	renderPass = new RenderPass(device, swapChain, colorResource, depthResouce);
-	pipeline = new Pipeline(device, swapChain, descriptorSetLayout, renderPass);
 	descriptorSets = new DescriptorSets(device, descriptorSetLayout, descriptorPool, uniformBuffers, texture);
 	framebuffers = new Framebuffers(device, renderPass, swapChain);
 	drawCommands = new DrawCommands(device, swapChain, commandPool, renderPass, framebuffers, pipeline, model, descriptorSets);
+}
+
+void Application::cleanup() {
+	cleanupSwapChainRelated();
+	delete imageIsReadyForRenderSemaphores;
+	delete imageFinishedRenderSemaphores;
+	delete frameInFlightFences;
+	delete descriptorSetLayout;
+	delete pipeline;
+	delete model;
+	delete texture;
+	delete commandPool;
+	delete device;
+	delete physicalDevice;
+	delete window;
+	delete instance;
+	delete debugger;
 }

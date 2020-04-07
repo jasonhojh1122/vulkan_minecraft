@@ -75,7 +75,6 @@ void Pipeline::createGraphicsPipeline() {
 	VkRect2D scissor{};
 	setupViewportStateCreateInfo(viewportState, viewport, scissor);
 	
-	/*
 	std::vector<VkDynamicState> dynamicStateEnables;
 	dynamicStateEnables.push_back(VK_DYNAMIC_STATE_VIEWPORT);
 	dynamicStateEnables.push_back(VK_DYNAMIC_STATE_SCISSOR);
@@ -83,7 +82,6 @@ void Pipeline::createGraphicsPipeline() {
 	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStateEnables.size());
 	dynamicState.pDynamicStates = dynamicStateEnables.data();
-	*/
 
 	VkPipelineRasterizationStateCreateInfo rasterization{};
 	setupRasterizationStateCreateInfo(rasterization);
@@ -112,7 +110,7 @@ void Pipeline::createGraphicsPipeline() {
 	pipelineInfo.pMultisampleState = &multisample;
 	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.pColorBlendState = &colorBlend;
-	pipelineInfo.pDynamicState = nullptr;
+	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = layout;
 	pipelineInfo.renderPass = renderPass->getRenderPass();
 	pipelineInfo.subpass = 0;

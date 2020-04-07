@@ -23,6 +23,7 @@ private:
 };
 
 Instance::~Instance() {
+	debugger->destroyDebugUtilsMessengerEXT(instance, nullptr);
 	vkDestroyInstance(instance, nullptr);
 }
 

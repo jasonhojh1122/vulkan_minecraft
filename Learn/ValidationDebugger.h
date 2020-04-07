@@ -23,7 +23,7 @@ public:
 	std::vector<const char*>&			getValidationLayersName() { return validationLayers; }
 	VkDebugUtilsMessengerCreateInfoEXT& getDebugUtilsMessengerCreateInfoEXT() { return messengerCreateInfo; }
 	VkDebugUtilsMessengerEXT&			getDebugUtilsMessengerEXT() { return messenger; }
-	void								destroyDebugger(VkInstance instance, const VkAllocationCallbacks* pAllocator);
+	void								destroyDebugUtilsMessengerEXT(VkInstance instance, const VkAllocationCallbacks* pAllocator);
 
 private:
 	void								setupDebugUtilsCreateInfo();
@@ -93,7 +93,7 @@ bool ValidationDebugger::isValidationSupported() {
 	return true;
 }
 
-void ValidationDebugger::destroyDebugger(VkInstance instance, const VkAllocationCallbacks* pAllocator) {
+void ValidationDebugger::destroyDebugUtilsMessengerEXT(VkInstance instance, const VkAllocationCallbacks* pAllocator) {
 	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
 	if (func != nullptr) {
 		func(instance, messenger, pAllocator);

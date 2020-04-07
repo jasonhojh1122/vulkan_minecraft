@@ -5,6 +5,7 @@
 
 class Window {
 public:
+	~Window();
 	Window(int w, int h);
 	void setInstanceRef(Instance* ins) { vkInstance = ins; }
 	void setWidth(int inWidth) { width = inWidth; }
@@ -30,6 +31,12 @@ private:
 	}
 
 };
+
+Window::~Window() {
+	vkDestroySurfaceKHR(vkInstance->instance, surface, nullptr);
+	glfwDestroyWindow(glfwWindow);
+	glfwTerminate();
+}
 
 Window::Window(int w, int h) : width(w), height(h){
 	createGLFWWindow();

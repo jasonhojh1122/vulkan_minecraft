@@ -3,6 +3,8 @@
 #include <chrono>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "Camera.h"
+#include "UserInputManager.h"
 #include "Window.h"
 #include "ValidationDebugger.h"
 #include "LogicalDevice.h"
@@ -48,6 +50,9 @@ private:
 	void cleanupSwapChainRelated();
 	void recreateSwapChainRelated();
 
+	Camera* camera;
+	UserInputManager* inputManager;
+
 	Window* window;
 	ValidationDebugger* debugger;
 	Instance* instance;
@@ -74,18 +79,21 @@ private:
 	Fences* imageInFlightFences;
 
 	int currentFrame = 0;
+	std::chrono::time_point<std::chrono::steady_clock> startTime;
+	std::chrono::time_point<std::chrono::steady_clock> lastFrameTime;
+	std::chrono::time_point<std::chrono::steady_clock> currentFrameTime;
 };
 
 Application::Application() {
 	init();
 }
 
-
-
 void Application::init() {
-	window		= new Window(800, 600);
-	debugger	= new ValidationDebugger(true);
-	instance	= new Instance(debugger);
+	camera			= new Camera(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 0.0, 1.0), 0.0f, 89.0f);
+	inputManager	= new UserInputManager(camera);
+	window			= new Window(800, 600, inputManager);
+	debugger		= new ValidationDebugger(true);
+	instance		= new Instance(debugger);
 	window->setInstanceRef(instance);
 	window->createVulkanSurface();
 
@@ -106,8 +114,8 @@ void Application::init() {
 	framebuffers	= new Framebuffers(device, renderPass, swapChain);
 	uniformBuffers	= new UniformBuffers(device, swapChain);
 
-	texture			= new Texture(device, "textures/chalet.jpg", commandPool);
-	model			= new Model(device, "models/chalet.obj", commandPool);
+	texture			= new Texture(device, "textures/house.jpg", commandPool);
+	model			= new Model(device, "models/house.obj", commandPool);
 
 	descriptorSets	= new DescriptorSets(device, descriptorSetLayout, descriptorPool, uniformBuffers, texture);
 
@@ -122,8 +130,15 @@ void Application::init() {
 
 void Application::run() {
 	std::cout << "Start rendering.\n";
+	startTime = lastFrameTime = std::chrono::high_resolution_clock::now();
 	while (!glfwWindowShouldClose(window->glfwWindow)) {
+		currentFrameTime = std::chrono::high_resolution_clock::now();
+		float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currentFrameTime - lastFrameTime).count();
+
+		inputManager->keyPressManager(window->glfwWindow, deltaTime);
+
 		glfwPollEvents();
+
 		drawFrame();
 	}
 	vkDeviceWaitIdle(device->getDevice());
@@ -173,17 +188,19 @@ void Application::waitForSwapChainImageReady(uint32_t swapChainIndex) {
 }
 
 void Application::updateUniformBuffer(uint32_t swapChainIndex) {
-	static auto startTime = std::chrono::high_resolution_clock::now();
-
-	auto currentTime = std::chrono::high_resolution_clock::now();
-	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
 	UniformBufferObject ubo = {};
+	ubo.model = glm::mat4(1.0f);
+	ubo.model = glm::translate(ubo.model, glm::vec3(0, 0, 0));
+
+	ubo.view = camera->getViewMatrix();
+	ubo.proj = glm::perspective(glm::radians(camera->zoom), swapChain->getExtent().width / (float)swapChain->getExtent().height, 0.1f, 50.0f);
+	ubo.proj[1][1] *= -1;
+
+	/*
 	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.proj = glm::perspective(glm::radians(45.0f), swapChain->getExtent().width / (float)swapChain->getExtent().height, 0.1f, 10.0f);
-	ubo.proj[1][1] *= -1;
-
+	*/
 	uniformBuffers->getBufferRef(swapChainIndex)->copyDataToBuffer(&ubo);
 }
 

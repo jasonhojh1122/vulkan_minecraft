@@ -2,11 +2,12 @@
 
 #include <stdexcept>
 #include "Instance.h"
+#include "UserInputManager.h"
 
 class Window {
 public:
 	~Window();
-	Window(int w, int h);
+	Window(int w, int h, UserInputManager* inputManager);
 	void setInstanceRef(Instance* ins) { vkInstance = ins; }
 	void setWidth(int inWidth) { width = inWidth; }
 	void setHeight(int inHeight) { height = inHeight; }
@@ -16,11 +17,15 @@ public:
 	void resetResized() { windowResized = false; }
 
 	Instance* vkInstance;
+	UserInputManager* inputManager;
 	int width, height;
 	GLFWwindow* glfwWindow;
 	VkSurfaceKHR surface;
 
 	bool windowResized = false;
+	bool firstMouse = true;
+	double lastX;
+	double lastY;
 
 private:
 	void createGLFWWindow();
@@ -28,6 +33,25 @@ private:
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
 		auto win = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
 		win->windowResized = true;
+	}
+
+	static void cursorCallback(GLFWwindow* window, double xpos, double ypos) {
+		auto win = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+		if (win->firstMouse) {
+			win->lastX = xpos;
+			win->lastY = ypos;
+			win->firstMouse = false;
+		}
+		double xoffset = xpos - win->lastX;
+		double yoffset = ypos - win->lastY;
+		win->lastX = xpos;
+		win->lastY = ypos;
+		win->inputManager->cursorManager(xoffset, yoffset);
+	}
+
+	static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+		auto win = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+		win->inputManager->scrollManager(yoffset);
 	}
 
 };
@@ -38,7 +62,9 @@ Window::~Window() {
 	glfwTerminate();
 }
 
-Window::Window(int w, int h) : width(w), height(h){
+Window::Window(int w, int h, UserInputManager* inInputManager) : width(w), height(h), inputManager(inInputManager){
+	lastX = w / 2;
+	lastY = h / 2;
 	createGLFWWindow();
 }
 
@@ -48,6 +74,10 @@ void Window::createGLFWWindow() {
 	glfwWindow = glfwCreateWindow(width, height, "Vulkan Test", nullptr, nullptr);
 	glfwSetWindowUserPointer(glfwWindow, this);
 	glfwSetFramebufferSizeCallback(glfwWindow, framebufferResizeCallback);
+	glfwSetCursorPosCallback(glfwWindow, cursorCallback);
+	glfwSetScrollCallback(glfwWindow, scrollCallback);
+	glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
 }
 
 void Window::createVulkanSurface() {

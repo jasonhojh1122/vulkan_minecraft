@@ -7,12 +7,15 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
 
 enum CameraMovement {
-	FORWARD,
-	BACKWARD,
-	LEFT,
-	RIGHT
+	CAM_FORWARD,
+	CAM_BACKWARD,
+	CAM_LEFT,
+	CAM_RIGHT,
+	CAM_UP,
+	CAM_DOWN
 };
 
 const float YAW = 0.0f;
@@ -63,22 +66,26 @@ public:
 
 	void processKeyboard(CameraMovement direction, float deltaTime) {
 		float velocity = movementSpeed * deltaTime;
-		if (direction == FORWARD)
+		if (direction == CAM_FORWARD)
 			position += front * velocity;
-		if (direction == BACKWARD)
+		if (direction == CAM_BACKWARD)
 			position -= front * velocity;
-		if (direction == RIGHT)
+		if (direction == CAM_RIGHT)
 			position += right * velocity;
-		if (direction == LEFT)
+		if (direction == CAM_LEFT)
 			position -= right * velocity;
+		if (direction == CAM_UP)
+			position += worldUp * velocity;
+		if (direction == CAM_DOWN)
+			position -= worldUp * velocity;
 	}
 
 	void processMouseMovement(float xOffset, float yOffset, bool constrainPitch = true) {
 		xOffset *= mouseSensitivity;
 		yOffset *= mouseSensitivity;
 
-		yaw += xOffset;
-		pitch += yOffset;
+		pitch -= xOffset;
+		yaw -= yOffset;
 
 		if (constrainPitch) {
 			if (pitch > 89.0f)

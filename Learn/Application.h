@@ -89,7 +89,7 @@ Application::Application() {
 }
 
 void Application::init() {
-	camera			= new Camera(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 0.0, 1.0), 0.0f, 89.0f);
+	camera			= new Camera(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 0.0, 1.0), 0.0f, 0.0f);
 	inputManager	= new UserInputManager(camera);
 	window			= new Window(800, 600, inputManager);
 	debugger		= new ValidationDebugger(true);
@@ -190,7 +190,7 @@ void Application::waitForSwapChainImageReady(uint32_t swapChainIndex) {
 void Application::updateUniformBuffer(uint32_t swapChainIndex) {
 	UniformBufferObject ubo = {};
 	ubo.model = glm::mat4(1.0f);
-	ubo.model = glm::translate(ubo.model, glm::vec3(0, 0, 0));
+	ubo.model = glm::translate(ubo.model, glm::vec3(5.0, 0, 0));
 
 	ubo.view = camera->getViewMatrix();
 	ubo.proj = glm::perspective(glm::radians(camera->zoom), swapChain->getExtent().width / (float)swapChain->getExtent().height, 0.1f, 50.0f);

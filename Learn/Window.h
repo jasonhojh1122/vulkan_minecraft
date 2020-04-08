@@ -37,21 +37,17 @@ private:
 
 	static void cursorCallback(GLFWwindow* window, double xpos, double ypos) {
 		auto win = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
-		if (win->firstMouse) {
-			win->lastX = xpos;
-			win->lastY = ypos;
-			win->firstMouse = false;
-		}
-		double xoffset = xpos - win->lastX;
-		double yoffset = ypos - win->lastY;
-		win->lastX = xpos;
-		win->lastY = ypos;
-		win->inputManager->cursorManager(xoffset, yoffset);
+		win->inputManager->cursorManager(window, xpos, ypos);
 	}
 
 	static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
 		auto win = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
 		win->inputManager->scrollManager(yoffset);
+	}
+
+	static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+		auto win = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+		win->inputManager->mousceButtonManager(window, button, action);
 	}
 
 };
@@ -72,11 +68,13 @@ void Window::createGLFWWindow() {
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindow = glfwCreateWindow(width, height, "Vulkan Test", nullptr, nullptr);
+
 	glfwSetWindowUserPointer(glfwWindow, this);
 	glfwSetFramebufferSizeCallback(glfwWindow, framebufferResizeCallback);
 	glfwSetCursorPosCallback(glfwWindow, cursorCallback);
 	glfwSetScrollCallback(glfwWindow, scrollCallback);
-	glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetMouseButtonCallback(glfwWindow, mouseButtonCallback);
+	glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
 }
 

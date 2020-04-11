@@ -2,15 +2,15 @@
 
 #include "LogicalDevice.h"
 #include "ShaderModule.h"
-#include "Vertex.h"
 #include "SwapChain.h"
 #include "DescriptorSetLayout.h"
 #include "RenderPass.h"
+#include "AssimpModel.h"
 
 class Pipeline {
 public:
 	~Pipeline();
-	Pipeline(LogicalDevice* device, SwapChain* swapChain, DescriptorSetLayout* descriptorSetLayout, RenderPass* renderPass);
+	Pipeline(LogicalDevice* device, SwapChain* swapChain, DescriptorSetLayout* descriptorSetLayout, RenderPass* renderPass, VertexLayout* vertexLayout);
 	VkPipelineLayout& getPipelineLayout() { return layout; }
 	VkPipeline& getPipeline() { return pipeline; }
 
@@ -36,8 +36,13 @@ private:
 	SwapChain* swapChain;
 	DescriptorSetLayout* descriptorSetLayout;
 	RenderPass* renderPass;
+	VertexLayout* vertexLayout;
 	VkPipelineLayout layout;
 	VkPipeline pipeline;
+
+	VkPipeline flat;
+	VkPipeline Gouraud;
+	VkPipeline phong;
 };
 
 Pipeline::~Pipeline() {
@@ -45,17 +50,19 @@ Pipeline::~Pipeline() {
 	vkDestroyPipelineLayout(device->getDevice(), layout, nullptr);
 }
 
-Pipeline::Pipeline(LogicalDevice* inDevice, SwapChain* inSwapChain, DescriptorSetLayout* inDescriptorSetLayout, RenderPass* inRenderPass) {
+Pipeline::Pipeline(LogicalDevice* inDevice, SwapChain* inSwapChain, DescriptorSetLayout* inDescriptorSetLayout, 
+	RenderPass* inRenderPass, VertexLayout* inVertexLayout) {
 	device = inDevice;
 	swapChain = inSwapChain;
 	descriptorSetLayout = inDescriptorSetLayout;
 	renderPass = inRenderPass;
+	vertexLayout = inVertexLayout;
 	createGraphicsPipeline();
 }
 
 void Pipeline::createGraphicsPipeline() {
-	ShaderModule vertShaderModule(device, "shaders/vert.spv");
-	ShaderModule fragShaderModule(device, "shaders/frag.spv");
+	ShaderModule vertShaderModule(device, "shaders/phong.vert.spv");
+	ShaderModule fragShaderModule(device, "shaders/phong.frag.spv");
 
 	VkPipelineShaderStageCreateInfo vertShaderStage{}, fragShaderStage{};
 	setupShaderStageCreateInfo(vertShaderStage, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule);
@@ -63,8 +70,8 @@ void Pipeline::createGraphicsPipeline() {
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStage, fragShaderStage };
 
 	VkPipelineVertexInputStateCreateInfo vertexInput{};
-	auto bindingDescription = Vertex::getBindingDescription();
-	auto attributeDescriptions = Vertex::getVertexInputAttributeDescriptions();
+	auto bindingDescription = vertexLayout->getBindingDescription();
+	auto attributeDescriptions = vertexLayout->getVertexInputAttributeDescriptions();
 	setupVertexInputStateCreateInfo(vertexInput, bindingDescription, attributeDescriptions);
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};

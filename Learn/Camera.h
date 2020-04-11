@@ -80,7 +80,7 @@ public:
 			position -= worldUp * velocity;
 	}
 
-	void processMouseMovement(float xOffset, float yOffset, bool constrainPitch = true) {
+	void processMouseMovement(float xOffset, float yOffset, bool constrainPitch = false) {
 		xOffset *= mouseSensitivity;
 		yOffset *= mouseSensitivity;
 

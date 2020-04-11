@@ -17,7 +17,7 @@
 #include "Resources.h"
 #include "Framebuffers.h"
 #include "Texture.h"
-#include "Model.h"
+#include "AssimpModel.h"
 #include "UniformBuffers.h"
 #include "DrawCommands.h"
 #include "Fences.h"
@@ -61,8 +61,9 @@ private:
 	SwapChain* swapChain;
 	CommandPool* commandPool;
 	DescriptorPool* descriptorPool;
-	Texture* texture;
-	Model* model;
+	// Texture* texture;
+	VertexLayout* vertexLayout;
+	AssimpModel* model;
 	ColorResource* colorResource;
 	DepthResource* depthResouce;
 	DescriptorSetLayout* descriptorSetLayout;
@@ -109,15 +110,23 @@ void Application::init() {
 
 	descriptorSetLayout = new DescriptorSetLayout(device);
 	renderPass		= new RenderPass(device, swapChain, colorResource, depthResouce);
-	pipeline		= new Pipeline(device, swapChain, descriptorSetLayout, renderPass);
+
+	vertexLayout = new VertexLayout({
+		VERTEX_COMPONENT_POSITION,
+		VERTEX_COMPONENT_NORMAL,
+		VERTEX_COMPONENT_UV,
+		VERTEX_COMPONENT_COLOR,
+	});
+
+	pipeline		= new Pipeline(device, swapChain, descriptorSetLayout, renderPass, vertexLayout);
 
 	framebuffers	= new Framebuffers(device, renderPass, swapChain);
 	uniformBuffers	= new UniformBuffers(device, swapChain);
 
-	texture			= new Texture(device, "textures/house.jpg", commandPool);
-	model			= new Model(device, "models/house.obj", commandPool);
+	// texture			= new Texture(device, "textures/house.jpg", commandPool);
+	model			= new AssimpModel(device, commandPool, vertexLayout, "models/treasure.dae");
 
-	descriptorSets	= new DescriptorSets(device, descriptorSetLayout, descriptorPool, uniformBuffers, texture);
+	descriptorSets	= new DescriptorSets(device, descriptorSetLayout, descriptorPool, uniformBuffers, nullptr);
 
 	drawCommands	= new DrawCommands(device, swapChain, commandPool, renderPass, framebuffers, pipeline, model, descriptorSets);
 
@@ -273,7 +282,7 @@ void Application::recreateSwapChainRelated() {
 	descriptorPool = new DescriptorPool(device, swapChain);
 	depthResouce = new DepthResource(device, swapChain, commandPool);
 	renderPass = new RenderPass(device, swapChain, colorResource, depthResouce);
-	descriptorSets = new DescriptorSets(device, descriptorSetLayout, descriptorPool, uniformBuffers, texture);
+	descriptorSets = new DescriptorSets(device, descriptorSetLayout, descriptorPool, uniformBuffers, nullptr);
 	framebuffers = new Framebuffers(device, renderPass, swapChain);
 	drawCommands = new DrawCommands(device, swapChain, commandPool, renderPass, framebuffers, pipeline, model, descriptorSets);
 }
@@ -286,7 +295,7 @@ void Application::cleanup() {
 	delete descriptorSetLayout;
 	delete pipeline;
 	delete model;
-	delete texture;
+	// delete texture;
 	delete commandPool;
 	delete device;
 	delete physicalDevice;

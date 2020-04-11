@@ -54,7 +54,8 @@ void Model::loadModel(std::string path) {
 		throw std::runtime_error("Failed to load model.");
 
 	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
-	
+	std::cout << 0 << '\n';
+
 	for (const auto& shape : shapes) {
 		for (const auto& index : shape.mesh.indices) {
 			Vertex vertex{};
@@ -71,13 +72,21 @@ void Model::loadModel(std::string path) {
 			};
 
 			vertex.color = { 1.0f, 1.0f, 1.0f };
-
+			std::cout << 1 << '\n';
+			vertex.normal = {
+				attrib.normals[3 * index.normal_index + 0],
+				attrib.normals[3 * index.normal_index + 1],
+				attrib.normals[3 * index.normal_index + 2]
+			};
+			std::cout << 2 << '\n';
+			
 			if (uniqueVertices.count(vertex) == 0) {
 				uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
 				vertices.push_back(vertex);
 			}
-
+			std::cout << 3 << '\n';
 			indices.push_back(uniqueVertices[vertex]);
+			std::cout << 4 << '\n';
 		}
 	}
 	std::cout << "Finished loading model.\n";

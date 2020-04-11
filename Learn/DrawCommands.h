@@ -6,14 +6,15 @@
 #include "RenderPass.h"
 #include "Framebuffers.h"
 #include "Pipeline.h"
-#include "Model.h"
+#include "AssimpModel.h"
 #include "DescriptorSets.h"
+
 
 class DrawCommands {
 public:
 	~DrawCommands();
 	DrawCommands(LogicalDevice* device, SwapChain* swapChain, CommandPool* commandPool, 
-		RenderPass* renderPass, Framebuffers* framebuffers, Pipeline* pipeline, Model* model, DescriptorSets* descriptorSets);
+		RenderPass* renderPass, Framebuffers* framebuffers, Pipeline* pipeline, AssimpModel* model, DescriptorSets* descriptorSets);
 	CommandBuffer* getCommandBufferRef(uint32_t index) { return commandBuffers[index]; }
 
 private:
@@ -27,7 +28,7 @@ private:
 	RenderPass* renderPass;
 	Framebuffers* framebuffers;
 	Pipeline* pipeline;
-	Model* model;
+	AssimpModel* model;
 	DescriptorSets* descriptorSets;
 
 	std::vector<CommandBuffer*> commandBuffers;
@@ -39,7 +40,7 @@ DrawCommands::~DrawCommands() {
 }
 
 DrawCommands::DrawCommands(LogicalDevice* inDevice, SwapChain* inSwapChain, CommandPool* inCommandPool, 
-	RenderPass* inRenderPass, Framebuffers* inFramebuffers, Pipeline* inPipeline, Model* inModel, DescriptorSets* inDescriptorSets) {
+	RenderPass* inRenderPass, Framebuffers* inFramebuffers, Pipeline* inPipeline, AssimpModel* inModel, DescriptorSets* inDescriptorSets) {
 	device = inDevice;
 	swapChain = inSwapChain;
 	commandPool = inCommandPool;
@@ -105,7 +106,7 @@ void DrawCommands::recordCommands() {
 		vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipelineLayout(),
 			0, 1, &descriptorSets->getDescriptorSet(i), 0, nullptr);
 
-		vkCmdDrawIndexed(commandBuffers[i]->getCommandBuffer(), model->getIndicesCount(), 1, 0, 0, 0);
+		vkCmdDrawIndexed(commandBuffers[i]->getCommandBuffer(), model->getIndexCount(), 1, 0, 0, 0);
 
 		vkCmdEndRenderPass(commandBuffers[i]->getCommandBuffer());
 

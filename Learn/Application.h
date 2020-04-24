@@ -90,7 +90,7 @@ Application::Application() {
 }
 
 void Application::init() {
-	camera			= new Camera(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 0.0, 1.0), 0.0f, 0.0f);
+	camera			= new Camera(glm::vec3(-10.0, 0.0, 0.0), glm::vec3(0.0, 0.0, 1.0), 0.0f, 0.0f);
 	inputManager	= new UserInputManager(camera);
 	window			= new Window(800, 600, inputManager);
 	debugger		= new ValidationDebugger(true);
@@ -136,6 +136,7 @@ void Application::init() {
 	frameInFlightFences->createFences();
 	imageInFlightFences				= new Fences(device, swapChain->getImageCount());
 }
+
 
 void Application::run() {
 	std::cout << "Start rendering.\n";
@@ -199,11 +200,17 @@ void Application::waitForSwapChainImageReady(uint32_t swapChainIndex) {
 void Application::updateUniformBuffer(uint32_t swapChainIndex) {
 	UniformBufferObject ubo = {};
 	ubo.model = glm::mat4(1.0f);
-	ubo.model = glm::translate(ubo.model, glm::vec3(5.0, 0, 0));
+	ubo.model = glm::scale(ubo.model, glm::vec3(0.5, 0.5, 0.5));
+	ubo.model = glm::rotate(ubo.model, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+	ubo.model = glm::rotate(ubo.model, glm::radians(-90.0f), glm::vec3(0.0, 1.0, 0.0));
+	ubo.model = glm::translate(ubo.model, glm::vec3(0.0, 0.0, 0.0));
 
 	ubo.view = camera->getViewMatrix();
 	ubo.proj = glm::perspective(glm::radians(camera->zoom), swapChain->getExtent().width / (float)swapChain->getExtent().height, 0.1f, 50.0f);
 	ubo.proj[1][1] *= -1;
+
+	ubo.lightPos = inputManager->getLightPos();
+	ubo.cameraPos = glm::vec4(camera->position, 0.0);
 
 	/*
 	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));

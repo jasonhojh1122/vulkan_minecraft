@@ -61,8 +61,10 @@ Pipeline::Pipeline(LogicalDevice* inDevice, SwapChain* inSwapChain, DescriptorSe
 }
 
 void Pipeline::createGraphicsPipeline() {
-	ShaderModule vertShaderModule(device, "shaders/phong.vert.spv");
-	ShaderModule fragShaderModule(device, "shaders/phong.frag.spv");
+	ShaderModule vertShaderModule(device, "shaders/gouraud.vert.spv");
+	ShaderModule fragShaderModule(device, "shaders/gouraud.frag.spv");
+	// ShaderModule vertShaderModule(device, "shaders/phong.vert.spv");
+	// ShaderModule fragShaderModule(device, "shaders/phong.frag.spv");
 
 	VkPipelineShaderStageCreateInfo vertShaderStage{}, fragShaderStage{};
 	setupShaderStageCreateInfo(vertShaderStage, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule);

@@ -18,9 +18,9 @@ enum CameraMovement {
 	CAM_DOWN
 };
 
-const float YAW = 0.0f;
 const float PITCH = 0.0f;
-const float SPEED = 0.005f;
+const float YAW = 0.0f;
+const float SPEED = 0.01f;
 const float SENSITIVITY = 0.1f;
 const float ZOOM = 45.0f;
 
@@ -32,8 +32,8 @@ public:
 	glm::vec3 right;
 	glm::vec3 up;
 
-	float yaw;
 	float pitch;
+	float yaw;
 
 	float movementSpeed;
 	float mouseSensitivity;
@@ -51,12 +51,12 @@ public:
 		updateCameraVectors();
 	}
 
-	Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float inYaw, float inPitch) : 
+	Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float inpitch, float inyaw) : 
 		front(glm::vec3(0.0f, 0.0f, -1.0f)), movementSpeed(SPEED), mouseSensitivity(SENSITIVITY), zoom(ZOOM) {
 		position = glm::vec3(posX, posY, posZ);
 		worldUp = glm::vec3(upX, upY, upZ);
-		yaw = inYaw;
-		pitch = inPitch;
+		pitch = inpitch;
+		yaw = inyaw;
 		updateCameraVectors();
 	}
 
@@ -80,18 +80,18 @@ public:
 			position -= worldUp * velocity;
 	}
 
-	void processMouseMovement(float xOffset, float yOffset, bool constrainPitch = false) {
+	void processMouseMovement(float xOffset, float yOffset, bool constrainyaw = false) {
 		xOffset *= mouseSensitivity;
 		yOffset *= mouseSensitivity;
 
-		pitch -= xOffset;
-		yaw -= yOffset;
+		yaw -= xOffset;
+		pitch -= yOffset;
 
-		if (constrainPitch) {
-			if (pitch > 89.0f)
-				pitch = 89.0f;
-			if (pitch < -89.0f)
-				pitch = -89.0f;
+		if (constrainyaw) {
+			if (yaw > 89.0f)
+				yaw = 89.0f;
+			if (yaw < -89.0f)
+				yaw = -89.0f;
 		}
 
 		updateCameraVectors();
@@ -109,9 +109,9 @@ public:
 private:
 	void updateCameraVectors() {
 		glm::vec3 tmpFront;
-		tmpFront.x = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
-		tmpFront.y = sin(glm::radians(pitch));
-		tmpFront.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
+		tmpFront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		tmpFront.y = sin(glm::radians(yaw));
+		tmpFront.z = cos(glm::radians(yaw)) * sin(glm::radians(pitch));
 		front = glm::normalize(tmpFront);
 
 		right = glm::normalize(glm::cross(front, worldUp));

@@ -11,11 +11,17 @@ public:
 	void keyPressManager(GLFWwindow* window, double deltaTime);
 	void mousceButtonManager(GLFWwindow* window, int button, int action);
 
+	glm::vec4 getLightPos() { return lightPos; };
+
+
 private:
 	Camera* camera;
 	double lastX, lastY;
 	bool firstMouse = true;
 	bool mouseLeftButtonIsClick = false;
+
+	glm::vec4 lightPos = glm::vec4(0.0, 0.0, 8.0, 0.0);
+	float dLightMovement = 0.1f;
 };
 
 void UserInputManager::cursorManager(GLFWwindow* window, double xpos, double ypos) {
@@ -25,7 +31,6 @@ void UserInputManager::cursorManager(GLFWwindow* window, double xpos, double ypo
 		lastX = xpos;
 		lastY = ypos;
 		camera->processMouseMovement(xoffset, yoffset);
-		std::cout << xpos << ' ' << ypos << std::endl;
 	}
 }
 
@@ -49,6 +54,22 @@ void UserInputManager::keyPressManager(GLFWwindow* window, double deltaTime) {
 		camera->processKeyboard(CAM_UP, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		camera->processKeyboard(CAM_DOWN, deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+		lightPos.x += dLightMovement;
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+		lightPos.x -= dLightMovement;
+	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+		lightPos.y += dLightMovement;
+	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+		lightPos.y -= dLightMovement;
+	if (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)
+		lightPos.z += dLightMovement;
+	if (glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)
+		lightPos.z -= dLightMovement;
+
+	std::cout << lightPos.x << ' ' << lightPos.y << ' ' << lightPos.z << std::endl;
+	// std::cout << camera->position.x << ' ' << camera->position.y << ' ' << camera->position.z << std::endl;
 
 }
 

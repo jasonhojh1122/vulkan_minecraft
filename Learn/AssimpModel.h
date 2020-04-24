@@ -134,6 +134,11 @@ public:
 		loadModel(fileName);
 	}
 
+	~AssimpModel() {
+		delete vertexBuffer;
+		delete indexBuffer;
+	}
+
 	Buffer* getVertexBufferRef() { return vertexBuffer; }
 	Buffer* getIndexBufferRef() { return indexBuffer; }
 	uint32_t getIndexCount() { return indexCount; }

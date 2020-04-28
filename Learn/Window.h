@@ -50,6 +50,11 @@ private:
 		win->inputManager->mousceButtonManager(window, button, action);
 	}
 
+	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+		auto win = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+		win->inputManager->singleKeyManager(key, action);
+	}
+
 };
 
 Window::~Window() {
@@ -75,7 +80,7 @@ void Window::createGLFWWindow() {
 	glfwSetScrollCallback(glfwWindow, scrollCallback);
 	glfwSetMouseButtonCallback(glfwWindow, mouseButtonCallback);
 	glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
+	glfwSetKeyCallback(glfwWindow, keyCallback);
 }
 
 void Window::createVulkanSurface() {

@@ -5,10 +5,12 @@ layout (location = 0) in vec3 inNormal;
 layout (location = 1) in vec3 inColor;
 layout (location = 2) in vec2 inUV;
 layout (location = 3) in vec3 inWorldPos;
-layout (location = 4) in vec3 inLightPos;
-layout (location = 5) in vec3 inCameraPos;
+layout (location = 4) in vec3 inLightPos[3];
+layout (location = 7) in vec3 inCameraPos;
 
 layout (location = 0) out vec4 outFragColor;
+
+vec3 calculatePointLight(vec3 lightColor, int i);
 
 void main() {
 	vec3 lightColor = vec3(1.0, 1.0, 1.0);
@@ -17,9 +19,20 @@ void main() {
 	float ambientStrength = 0.1;
 	vec3 ambient = ambientStrength * lightColor;
 
+	vec3 result = ambient;
+
+	for (int i = 0; i < 3; ++i) {
+		result += calculatePointLight(lightColor, i);
+	}
+
+	result = result * inColor;
+	outFragColor = vec4(result, 1.0);
+}
+
+vec3 calculatePointLight(vec3 lightColor, int i) {
 	// diffuse
 	vec3 normal = normalize(inNormal);
-	vec3 lightDir = normalize(inLightPos - inWorldPos);
+	vec3 lightDir = normalize(inLightPos[i] - inWorldPos);
 	float diff = max(dot(normal, lightDir), 0.0);
 	vec3 diffuse = diff * lightColor;
 
@@ -30,6 +43,5 @@ void main() {
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64);
 	vec3 specular = specularStrength * spec * lightColor;
 
-	vec3 result = (ambient + diffuse + specular) * inColor;
-	outFragColor = vec4(result, 1.0);
+	return diffuse + specular;
 }

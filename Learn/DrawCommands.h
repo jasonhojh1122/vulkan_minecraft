@@ -88,14 +88,11 @@ void DrawCommands::recordCommands() {
 		viewport.width = swapChain->getExtent().width;
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
-		vkCmdSetViewport(commandBuffers[i]->getCommandBuffer(), 0, 1, &viewport);
 
 		VkRect2D scissor{};
 		scissor.extent = swapChain->getExtent();
 		scissor.offset = { 0, 0 };
 		vkCmdSetScissor(commandBuffers[i]->getCommandBuffer(), 0, 1, &scissor);
-		
-		vkCmdBindPipeline(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipeline());
 		
 		VkBuffer vertexBuffers[] = { model->getVertexBufferRef()->getBuffer() };
 		VkDeviceSize offsets[] = { 0 };
@@ -106,6 +103,19 @@ void DrawCommands::recordCommands() {
 		vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipelineLayout(),
 			0, 1, &descriptorSets->getDescriptorSet(i), 0, nullptr);
 
+		viewport.width = viewport.width / 3.0;
+		vkCmdSetViewport(commandBuffers[i]->getCommandBuffer(), 0, 1, &viewport);
+		vkCmdBindPipeline(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPhongPipeline());
+		vkCmdDrawIndexed(commandBuffers[i]->getCommandBuffer(), model->getIndexCount(), 1, 0, 0, 0);
+		
+		viewport.x = viewport.width;
+		vkCmdSetViewport(commandBuffers[i]->getCommandBuffer(), 0, 1, &viewport);
+		vkCmdBindPipeline(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getGouraudPipeline());
+		vkCmdDrawIndexed(commandBuffers[i]->getCommandBuffer(), model->getIndexCount(), 1, 0, 0, 0);
+
+		viewport.x *= 2;
+		vkCmdSetViewport(commandBuffers[i]->getCommandBuffer(), 0, 1, &viewport);
+		vkCmdBindPipeline(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getFlatPipeline());
 		vkCmdDrawIndexed(commandBuffers[i]->getCommandBuffer(), model->getIndexCount(), 1, 0, 0, 0);
 
 		vkCmdEndRenderPass(commandBuffers[i]->getCommandBuffer());

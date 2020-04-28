@@ -185,14 +185,12 @@
     <None Include="shaders\compile.bat" />
     <None Include="shaders\flat.frag" />
     <None Include="shaders\flat.vert" />
-    <None Include="shaders\frag.spv" />
     <None Include="shaders\gouraud.frag" />
     <None Include="shaders\gouraud.vert" />
     <None Include="shaders\phong.frag" />
     <None Include="shaders\phong.vert" />
     <None Include="shaders\shader.frag" />
     <None Include="shaders\shader.vert" />
-    <None Include="shaders\vert.spv" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

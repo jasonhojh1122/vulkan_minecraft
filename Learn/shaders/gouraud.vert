@@ -5,8 +5,8 @@ layout(binding = 0) uniform UniformBufferObject {
 	mat4 model;
 	mat4 view;
 	mat4 proj;
-	vec4 lightPos;
 	vec4 cameraPos;
+	vec4 lightPos[3];
 } ubo;
 
 layout (location = 0) in vec3 inPos;
@@ -27,30 +27,31 @@ void main() {
 	
 	vec4 worldPos = ubo.model * vec4(inPos, 1.0);
 	vec3 outWorldPos = worldPos.xyz;
-
-	vec3 outLightPos = ubo.lightPos.xyz;	
-	vec3 outCameraPos = ubo.cameraPos.xyz;
-
+	
 	vec3 lightColor = vec3(1.0, 1.0, 1.0);
 
 	// ambient
 	float ambientStrength = 0.2;
 	vec3 ambient = ambientStrength * lightColor;
 
-	// diffuse
-	vec3 normal = normalize(outNormal);
-	vec3 lightDir = normalize(outLightPos - outWorldPos);
-	float diff = max(dot(normal, lightDir), 0.1);
-	vec3 diffuse = diff * lightColor;
+	vec3 result = ambient;
 
-	// specular
-	float specularStrength = 1.0;
-	vec3 reflectDir = reflect(-lightDir, normal);
-	vec3 viewDir = normalize(outCameraPos - outWorldPos);
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64);
-	vec3 specular = specularStrength * spec * lightColor;
+	for (int i = 0; i < 3; i++) {
+		// diffuse
+		vec3 normal = normalize(outNormal);
+		vec3 lightDir = normalize(ubo.lightPos[i].xyz - outWorldPos);
+		float diff = max(dot(normal, lightDir), 0.0);
+		vec3 diffuse = diff * lightColor;
+		result += diffuse;
 
-	outColor = (ambient + diffuse + specular) * inColor;
-	
-	// outColor = specular;
+		// specular
+		float specularStrength = 1.0;
+		vec3 reflectDir = reflect(-lightDir, normal);
+		vec3 viewDir = normalize(ubo.cameraPos.xyz - outWorldPos);
+		float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64);
+		vec3 specular = specularStrength * spec * lightColor;
+		result += specular;
+	}
+
+	outColor = result * inColor;
 }

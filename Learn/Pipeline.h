@@ -12,9 +12,12 @@ public:
 	~Pipeline();
 	Pipeline(LogicalDevice* device, SwapChain* swapChain, DescriptorSetLayout* descriptorSetLayout, RenderPass* renderPass, VertexLayout* vertexLayout);
 	VkPipelineLayout& getPipelineLayout() { return layout; }
-	VkPipeline& getPipeline() { return pipeline; }
+	VkPipeline& getPhongPipeline() { return phong; }
+	VkPipeline& getGouraudPipeline() { return gouraud; }
+	VkPipeline& getFlatPipeline() { return flat; }
 
 private:
+	void createPipelineCache();
 	void createGraphicsPipeline();
 	void setupShaderStageCreateInfo(VkPipelineShaderStageCreateInfo& createInfo, VkShaderStageFlagBits stage, ShaderModule& module);
 	void setupVertexInputStateCreateInfo(VkPipelineVertexInputStateCreateInfo& createInfo,
@@ -38,16 +41,19 @@ private:
 	RenderPass* renderPass;
 	VertexLayout* vertexLayout;
 	VkPipelineLayout layout;
-	VkPipeline pipeline;
+	VkPipelineCache pipelineCache;
 
-	VkPipeline flat;
-	VkPipeline Gouraud;
 	VkPipeline phong;
+	VkPipeline gouraud;
+	VkPipeline flat;
 };
 
 Pipeline::~Pipeline() {
-	vkDestroyPipeline(device->getDevice(), pipeline, nullptr);
+	vkDestroyPipeline(device->getDevice(), phong, nullptr);
+	vkDestroyPipeline(device->getDevice(), gouraud, nullptr);
+	vkDestroyPipeline(device->getDevice(), flat, nullptr);
 	vkDestroyPipelineLayout(device->getDevice(), layout, nullptr);
+	vkDestroyPipelineCache(device->getDevice(), pipelineCache, nullptr);
 }
 
 Pipeline::Pipeline(LogicalDevice* inDevice, SwapChain* inSwapChain, DescriptorSetLayout* inDescriptorSetLayout, 
@@ -57,24 +63,24 @@ Pipeline::Pipeline(LogicalDevice* inDevice, SwapChain* inSwapChain, DescriptorSe
 	descriptorSetLayout = inDescriptorSetLayout;
 	renderPass = inRenderPass;
 	vertexLayout = inVertexLayout;
+
+	createPipelineCache();
 	createGraphicsPipeline();
 }
 
+void Pipeline::createPipelineCache() {
+	VkPipelineCacheCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+	vkCreatePipelineCache(device->getDevice(), &createInfo, nullptr, &pipelineCache);
+}
+
 void Pipeline::createGraphicsPipeline() {
-	ShaderModule vertShaderModule(device, "shaders/gouraud.vert.spv");
-	ShaderModule fragShaderModule(device, "shaders/gouraud.frag.spv");
-	// ShaderModule vertShaderModule(device, "shaders/phong.vert.spv");
-	// ShaderModule fragShaderModule(device, "shaders/phong.frag.spv");
-
-	VkPipelineShaderStageCreateInfo vertShaderStage{}, fragShaderStage{};
-	setupShaderStageCreateInfo(vertShaderStage, VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule);
-	setupShaderStageCreateInfo(fragShaderStage, VK_SHADER_STAGE_FRAGMENT_BIT, fragShaderModule);
-	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStage, fragShaderStage };
-
-	VkPipelineVertexInputStateCreateInfo vertexInput{};
-	auto bindingDescription = vertexLayout->getBindingDescription();
-	auto attributeDescriptions = vertexLayout->getVertexInputAttributeDescriptions();
-	setupVertexInputStateCreateInfo(vertexInput, bindingDescription, attributeDescriptions);
+	ShaderModule gouraudVertShader(device, "shaders/gouraud.vert.spv");
+	ShaderModule gouraudFragShader(device, "shaders/gouraud.frag.spv");
+	ShaderModule phongVertShader(device, "shaders/phong.vert.spv");
+	ShaderModule phongFragShader(device, "shaders/phong.frag.spv");
+	ShaderModule flatVertShader(device, "shaders/flat.vert.spv");
+	ShaderModule flatFragShader(device, "shaders/flat.frag.spv");
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 	setupInputAssemblyStateCreateInfo(inputAssembly);
@@ -108,10 +114,14 @@ void Pipeline::createGraphicsPipeline() {
 
 	createPipelineLayout();
 
+	VkPipelineVertexInputStateCreateInfo vertexInput{};
+	auto bindingDescription = vertexLayout->getBindingDescription();
+	auto attributeDescriptions = vertexLayout->getVertexInputAttributeDescriptions();
+	setupVertexInputStateCreateInfo(vertexInput, bindingDescription, attributeDescriptions);
+
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = 2;
-	pipelineInfo.pStages = shaderStages;
 	pipelineInfo.pVertexInputState = &vertexInput;
 	pipelineInfo.pInputAssemblyState = &inputAssembly;
 	pipelineInfo.pViewportState = &viewportState;
@@ -124,9 +134,30 @@ void Pipeline::createGraphicsPipeline() {
 	pipelineInfo.renderPass = renderPass->getRenderPass();
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+	pipelineInfo.flags = VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT;
 
-	if (vkCreateGraphicsPipelines(device->getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS)
-		throw std::runtime_error("Failed to create graphics pipeline");
+	VkPipelineShaderStageCreateInfo shaderStages[2] = {};
+	pipelineInfo.pStages = shaderStages;
+
+	setupShaderStageCreateInfo(shaderStages[0], VK_SHADER_STAGE_VERTEX_BIT, phongVertShader);
+	setupShaderStageCreateInfo(shaderStages[1], VK_SHADER_STAGE_FRAGMENT_BIT, phongFragShader);
+
+	if (vkCreateGraphicsPipelines(device->getDevice(), pipelineCache, 1, &pipelineInfo, nullptr, &phong) != VK_SUCCESS)
+		throw std::runtime_error("Failed to create phong graphic pipeline");
+
+	pipelineInfo.basePipelineHandle = phong;
+	pipelineInfo.flags = VK_PIPELINE_CREATE_DERIVATIVE_BIT;
+	pipelineInfo.basePipelineIndex = -1;
+
+	setupShaderStageCreateInfo(shaderStages[0], VK_SHADER_STAGE_VERTEX_BIT, gouraudVertShader);
+	setupShaderStageCreateInfo(shaderStages[1], VK_SHADER_STAGE_FRAGMENT_BIT, gouraudFragShader);
+	if (vkCreateGraphicsPipelines(device->getDevice(), pipelineCache, 1, &pipelineInfo, nullptr, &gouraud) != VK_SUCCESS)
+		throw std::runtime_error("Failed to create gouraud graphic pipeline");
+
+	setupShaderStageCreateInfo(shaderStages[0], VK_SHADER_STAGE_VERTEX_BIT, flatVertShader);
+	setupShaderStageCreateInfo(shaderStages[1], VK_SHADER_STAGE_FRAGMENT_BIT, flatFragShader);
+	if (vkCreateGraphicsPipelines(device->getDevice(), pipelineCache, 1, &pipelineInfo, nullptr, &flat) != VK_SUCCESS)
+		throw std::runtime_error("Failed to create flat graphic pipeline");
 
 }
 

@@ -130,9 +130,6 @@
     <None Include="shaders\flat.vert">
       <Filter>shaders</Filter>
     </None>
-    <None Include="shaders\frag.spv">
-      <Filter>shaders</Filter>
-    </None>
     <None Include="shaders\gouraud.frag">
       <Filter>shaders</Filter>
     </None>
@@ -149,9 +146,6 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="shaders\shader.vert">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\vert.spv">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

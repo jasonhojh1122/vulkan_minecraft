@@ -124,7 +124,7 @@ void Application::init() {
 	uniformBuffers	= new UniformBuffers(device, swapChain);
 
 	// texture			= new Texture(device, "textures/house.jpg", commandPool);
-	model			= new AssimpModel(device, commandPool, vertexLayout, "models/treasure.dae");
+	model			= new AssimpModel(device, commandPool, vertexLayout, "models/chinesedragon.dae");
 
 	descriptorSets	= new DescriptorSets(device, descriptorSetLayout, descriptorPool, uniformBuffers, nullptr);
 
@@ -209,7 +209,9 @@ void Application::updateUniformBuffer(uint32_t swapChainIndex) {
 	ubo.proj = glm::perspective(glm::radians(camera->zoom), swapChain->getExtent().width / (float)swapChain->getExtent().height, 0.1f, 50.0f);
 	ubo.proj[1][1] *= -1;
 
-	ubo.lightPos = inputManager->getLightPos();
+	for (int i = 0; i < 3; ++i)
+		ubo.lightPos[i] = inputManager->getLightPos(i);
+
 	ubo.cameraPos = glm::vec4(camera->position, 0.0);
 
 	/*

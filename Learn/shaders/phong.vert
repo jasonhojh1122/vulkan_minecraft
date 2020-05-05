@@ -1,13 +1,16 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(binding = 0) uniform UniformBufferObject {
-	mat4 model;
+layout (binding = 0) uniform UniformObject {
 	mat4 view;
 	mat4 proj;
 	vec4 cameraPos;
 	vec4 lightPos[3];
 } ubo;
+
+layout (binding = 1) uniform DynamicUniformObject {
+	mat4 model;
+} dynamicUbo;
 
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec3 inNormal;
@@ -29,11 +32,11 @@ void main() {
 	outNormal = inNormal;
 	outColor = inColor;
 	outUV = inUV;
-	gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPos, 1.0);
+	gl_Position = ubo.proj * ubo.view * dynamicUbo.model * vec4(inPos, 1.0);
 
-	outNormal = mat3(ubo.model) * inNormal;
+	outNormal = mat3(dynamicUbo.model) * inNormal;
 	
-	vec4 worldPos = ubo.model * vec4(inPos, 1.0);
+	vec4 worldPos = dynamicUbo.model * vec4(inPos, 1.0);
 	outWorldPos = worldPos.xyz;
 
 	for (int i = 0; i < 3; i++)

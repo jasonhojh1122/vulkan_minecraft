@@ -7,7 +7,12 @@
 class Window {
 public:
 	~Window();
-	Window(int w, int h, UserInputManager* inputManager);
+	Window(int w, int h, UserInputManager* userInputManager) : width(w), height(h) {
+		inputManager = userInputManager;
+		lastX = w / 2;
+		lastY = h / 2;
+		createGLFWWindow();
+	}
 	void setInstanceRef(Instance* ins) { vkInstance = ins; }
 	void setWidth(int inWidth) { width = inWidth; }
 	void setHeight(int inHeight) { height = inHeight; }
@@ -61,12 +66,6 @@ Window::~Window() {
 	vkDestroySurfaceKHR(vkInstance->instance, surface, nullptr);
 	glfwDestroyWindow(glfwWindow);
 	glfwTerminate();
-}
-
-Window::Window(int w, int h, UserInputManager* inInputManager) : width(w), height(h), inputManager(inInputManager){
-	lastX = w / 2;
-	lastY = h / 2;
-	createGLFWWindow();
 }
 
 void Window::createGLFWWindow() {

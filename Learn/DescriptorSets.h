@@ -50,33 +50,38 @@ void DescriptorSets::createDescriptorSets() {
 		throw std::runtime_error("Failed to allocate descriptor sets.");
 
 	for (size_t i = 0; i < layouts.size(); ++i) {
-		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = uniformBuffer->getBufferRef(i)->getBuffer();
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformBufferObject);
+		VkDescriptorBufferInfo uboBuffer{};
+		uboBuffer.buffer = uniformBuffer->getBufferRef(i)->getBuffer();
+		uboBuffer.offset = 0;
+		uboBuffer.range = sizeof(UniformBufferObject);
+
+		VkDescriptorBufferInfo dynamicUboBuffer{};
+		dynamicUboBuffer.buffer = uniformBuffer->getDynamicBufferRef(i)->getBuffer();
+		dynamicUboBuffer.offset = 0;
+		dynamicUboBuffer.range = sizeof(DynamicUniformObject);
 		/*
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo.imageView = texture->getImageView();
 		imageInfo.sampler = texture->getSampler();
 		*/
-		std::vector<VkWriteDescriptorSet> descriptorWrites(1);
+		std::vector<VkWriteDescriptorSet> descriptorWrites(2);
 		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrites[0].dstSet = descriptorSets[i];
 		descriptorWrites[0].dstBinding = 0;
 		descriptorWrites[0].dstArrayElement = 0;
 		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		descriptorWrites[0].descriptorCount = 1;
-		descriptorWrites[0].pBufferInfo = &bufferInfo;
-		/*
+		descriptorWrites[0].pBufferInfo = &uboBuffer;
+		
 		descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrites[1].dstSet = descriptorSets[i];
 		descriptorWrites[1].dstBinding = 1;
 		descriptorWrites[1].dstArrayElement = 0;
-		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 		descriptorWrites[1].descriptorCount = 1;
-		descriptorWrites[1].pImageInfo = &imageInfo;
-		*/
+		descriptorWrites[1].pBufferInfo = &dynamicUboBuffer;
+		
 		vkUpdateDescriptorSets(device->getDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}
 }

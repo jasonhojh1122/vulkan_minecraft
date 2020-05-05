@@ -116,6 +116,9 @@
     <ClInclude Include="AssimpModel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ModelMatrix.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="note.md">

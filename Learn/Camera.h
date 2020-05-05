@@ -40,7 +40,7 @@ public:
 	float zoom;
 	
 
-	Camera(glm::vec3 inPos = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 inWorldUp = glm::vec3(0.0f, 1.0f, 0.0f), 
+	Camera(glm::vec3 inPos = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 inWorldUp = glm::vec3(0.0f, 0.0f, 1.0f), 
 		float inYaw = YAW, float inPitch = PITCH) : 
 		front(glm::vec3(0.0f, 0.0f, 1.0f)), movementSpeed(SPEED), mouseSensitivity(SENSITIVITY), zoom(ZOOM) {
 		

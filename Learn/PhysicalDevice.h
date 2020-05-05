@@ -26,6 +26,7 @@ public:
 	PhysicalDevice(Instance* instance, Window* win);
 	VkPhysicalDevice& getDevice() { return device; }
 	QueueFamilyIndices& getQueueFamilyIndices() { return queueFamilyIndices; }
+	VkPhysicalDeviceProperties& getProperties() { return properties; }
 	uint32_t getGraphicQueueIndex() { return queueFamilyIndices.graphic.value(); }
 	uint32_t getPresentQueueIndex() { return queueFamilyIndices.present.value(); }
 	SwapChainSupportDetails retrieveSwapChainSupportDetails(VkPhysicalDevice candidate, Window* win);
@@ -55,6 +56,7 @@ private:
 	VkPhysicalDeviceFeatures features;
 	VkPhysicalDeviceMemoryProperties memProperties;
 	VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+	VkPhysicalDeviceProperties properties;
 };
 
 PhysicalDevice::PhysicalDevice(Instance* instance, Window* win) {
@@ -62,6 +64,7 @@ PhysicalDevice::PhysicalDevice(Instance* instance, Window* win) {
 	window = win;
 	selectPhysicalDevice();
 	vkGetPhysicalDeviceMemoryProperties(device, &memProperties);
+	
 }
 
 void PhysicalDevice::selectPhysicalDevice() {
@@ -70,6 +73,7 @@ void PhysicalDevice::selectPhysicalDevice() {
 	for (const auto& candidate : possibleDevices) {
 		if (isDeviceSuitable(candidate)) {
 			device = candidate;
+			vkGetPhysicalDeviceProperties(device, &properties);
 			msaaSamples = retrieveMultisampleCountFlagBits();
 			return;
 		}
@@ -185,9 +189,7 @@ VkFormat PhysicalDevice::retrieveSupportedFormat(const std::vector<VkFormat>& ca
 }
 
 VkSampleCountFlagBits PhysicalDevice::retrieveMultisampleCountFlagBits() {
-	VkPhysicalDeviceProperties properties;
-	vkGetPhysicalDeviceProperties(device, &properties);
-
+	
 	VkSamplerCreateFlags counts = std::min(properties.limits.framebufferColorSampleCounts,
 		properties.limits.framebufferDepthSampleCounts);
 

@@ -22,9 +22,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "LogicalDevice.h"
 #include "Buffer.h"
-#include "CommandPool.h"
+#include "ModelMatrix.h"
 
 typedef enum Component {
 	VERTEX_COMPONENT_POSITION = 0x0,
@@ -127,11 +126,18 @@ struct ModelCreateInfo {
 
 class AssimpModel {
 public:
-	AssimpModel(LogicalDevice* inDevice, CommandPool* inPool, VertexLayout* inVertexLayout, std::string fileName) {
+	AssimpModel(LogicalDevice* inDevice, CommandPool* inPool, VertexLayout* inVertexLayout) {
 		device = inDevice;
 		commandPool = inPool;
 		vertexLayout = inVertexLayout;
-		loadModel(fileName);
+		vertexData.resize(0);
+		indexData.resize(0);
+		dataOffset.resize(3);
+		loadModel("models/chinesedragon.dae", 0);
+		loadModel("models/teapot.dae", 1);
+		loadModel("models/treasure.dae", 2);
+		createVertexBuffer();
+		createIndexBuffer();
 	}
 
 	~AssimpModel() {
@@ -141,7 +147,10 @@ public:
 
 	Buffer* getVertexBufferRef() { return vertexBuffer; }
 	Buffer* getIndexBufferRef() { return indexBuffer; }
-	uint32_t getIndexCount() { return indexCount; }
+	uint32_t getIndexOffset(int index) { return dataOffset[index].indexBase; }
+	uint32_t getIndexCount(int index) { return dataOffset[index].indexCount; }
+	uint32_t getVertexOffset(int index) { return dataOffset[index].vertexCount; }
+
 
 private:
 	LogicalDevice* device;
@@ -150,17 +159,18 @@ private:
 
 	Buffer* vertexBuffer;
 	Buffer* indexBuffer;
-	uint32_t indexCount = 0;
-	uint32_t vertexCount = 0;
+
+	std::vector<float> vertexData;
+	std::vector<uint32_t> indexData;
 
 	/** @brief Stores vertex and index base and counts for each part of a model */
-	struct ModelPart {
+	struct DataOffset {
 		uint32_t vertexBase;
 		uint32_t vertexCount;
 		uint32_t indexBase;
 		uint32_t indexCount;
 	};
-	std::vector<ModelPart> parts;
+	std::vector<DataOffset> dataOffset;
 
 	struct Dimension {
 		glm::vec3 min = glm::vec3(FLT_MAX);
@@ -169,6 +179,7 @@ private:
 	};
 	Dimension dim;
 
+
 	static const int defaultFlags = 
 		aiProcess_FlipWindingOrder | 
 		aiProcess_Triangulate | 
@@ -176,17 +187,18 @@ private:
 		aiProcess_CalcTangentSpace | 
 		aiProcess_GenSmoothNormals;
 
-	void loadModel(const std::string& filename);
-
-	void loadFromFile(const std::string& filename, ModelCreateInfo* createInfo);
+	void loadModel(const std::string& filename, int modelIndex);
+	void loadFromFile(const std::string& filename, ModelCreateInfo* createInfo, int modelIndex);
+	void createVertexBuffer();
+	void createIndexBuffer();
 };
 
-void AssimpModel::loadModel(const std::string& filename) {
+void AssimpModel::loadModel(const std::string& filename, int modelIndex) {
 	ModelCreateInfo modelCreateInfo(1.0f, 1.0f, 0.0f);
-	loadFromFile(filename, &modelCreateInfo);
+	loadFromFile(filename, &modelCreateInfo, modelIndex);
 }
 
-void AssimpModel::loadFromFile(const std::string& filename, ModelCreateInfo* createInfo) {
+void AssimpModel::loadFromFile(const std::string& filename, ModelCreateInfo* createInfo, int modelIndex) {
 
 	Assimp::Importer Importer;
 	const aiScene* pScene;
@@ -199,9 +211,6 @@ void AssimpModel::loadFromFile(const std::string& filename, ModelCreateInfo* cre
 		throw std::runtime_error("Failed to load model from file.");
 	}
 
-	parts.clear();
-	parts.resize(pScene->mNumMeshes);
-
 	glm::vec3 scale(1.0f);
 	glm::vec2 uvscale(1.0f);
 	glm::vec3 center(0.0f);
@@ -211,18 +220,13 @@ void AssimpModel::loadFromFile(const std::string& filename, ModelCreateInfo* cre
 		center = createInfo->center;
 	}
 
-	std::vector<float> vertexData;
-	std::vector<uint32_t> indexData;
+	dataOffset[modelIndex] = {};
 
 	// Load meshes
 	for (unsigned int i = 0; i < pScene->mNumMeshes; i++) {
 		const aiMesh* paiMesh = pScene->mMeshes[i];
 
-		parts[i] = {};
-		parts[i].vertexBase = vertexCount;
-		parts[i].indexBase = indexCount;
-
-		vertexCount += pScene->mMeshes[i]->mNumVertices;
+		dataOffset[modelIndex].vertexCount += pScene->mMeshes[i]->mNumVertices;
 
 		aiColor3D pColor(0.f, 0.f, 0.f);
 		pScene->mMaterials[paiMesh->mMaterialIndex]->Get(AI_MATKEY_COLOR_DIFFUSE, pColor);
@@ -290,8 +294,6 @@ void AssimpModel::loadFromFile(const std::string& filename, ModelCreateInfo* cre
 
 		dim.size = dim.max - dim.min;
 
-		parts[i].vertexCount = paiMesh->mNumVertices;
-
 		uint32_t indexBase = static_cast<uint32_t>(indexData.size());
 		for (unsigned int j = 0; j < paiMesh->mNumFaces; j++) {
 			const aiFace& Face = paiMesh->mFaces[j];
@@ -300,11 +302,40 @@ void AssimpModel::loadFromFile(const std::string& filename, ModelCreateInfo* cre
 			indexData.push_back(indexBase + Face.mIndices[0]);
 			indexData.push_back(indexBase + Face.mIndices[1]);
 			indexData.push_back(indexBase + Face.mIndices[2]);
-			parts[i].indexCount += 3;
-			indexCount += 3;
+			dataOffset[modelIndex].indexCount += 3;
 		}
 	}
 
+	if (modelIndex == 0) {
+		dataOffset[modelIndex].indexBase = 0;
+		dataOffset[modelIndex].vertexBase = 0;
+	}
+	else {
+		dataOffset[modelIndex].indexBase = dataOffset[modelIndex - 1].indexBase + dataOffset[modelIndex - 1].indexCount;
+		dataOffset[modelIndex].vertexBase = dataOffset[modelIndex - 1].vertexBase + dataOffset[modelIndex - 1].vertexCount;
+	}
+}
+
+void AssimpModel::createIndexBuffer() {
+	uint32_t iBufferSize = static_cast<uint32_t>(indexData.size()) * sizeof(uint32_t);
+
+	Buffer* stagingBuffer = new Buffer(device,
+		iBufferSize,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	stagingBuffer->copyDataToBuffer(indexData.data());
+
+	indexBuffer = new Buffer(device,
+		iBufferSize,
+		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	indexBuffer->copyBufferToBuffer(stagingBuffer, commandPool);
+
+	delete stagingBuffer;
+	indexData.resize(0);
+}
+
+void AssimpModel::createVertexBuffer() {
 	uint32_t vBufferSize = static_cast<uint32_t>(vertexData.size()) * sizeof(float);
 	uint32_t iBufferSize = static_cast<uint32_t>(indexData.size()) * sizeof(uint32_t);
 
@@ -321,18 +352,5 @@ void AssimpModel::loadFromFile(const std::string& filename, ModelCreateInfo* cre
 	vertexBuffer->copyBufferToBuffer(stagingBuffer, commandPool);
 
 	delete stagingBuffer;
-
-	stagingBuffer = new Buffer(device,
-		iBufferSize,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	stagingBuffer->copyDataToBuffer(indexData.data());
-
-	indexBuffer = new Buffer(device,
-		iBufferSize,
-		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	indexBuffer->copyBufferToBuffer(stagingBuffer, commandPool);
-
-	delete stagingBuffer;
+	vertexData.resize(0);
 }

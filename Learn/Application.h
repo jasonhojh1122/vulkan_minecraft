@@ -41,6 +41,8 @@ private:
 	void acquireNextSwapChainImageIndex(uint32_t& imageIndex);
 	void waitForSwapChainImageReady(uint32_t swapChainIndex);
 	void updateUniformBuffer(uint32_t swapChainIndex);
+	void updateDynamicUniformBuffer(uint32_t swapChainIndex);
+
 	void setupSubmitInfo(VkSubmitInfo& submitInfo, uint32_t swapChainIndex, 
 		VkSemaphore* waitSemaphores, VkSemaphore* signalSemaphores, VkPipelineStageFlags* waitStages);
 	void submitDrawCommands(VkSubmitInfo& submitInfo);
@@ -90,7 +92,7 @@ Application::Application() {
 }
 
 void Application::init() {
-	camera			= new Camera(glm::vec3(-10.0, 0.0, 0.0), glm::vec3(0.0, 0.0, 1.0), 0.0f, 0.0f);
+	camera			= new Camera(glm::vec3(-36.0, 0.0, 21.0), glm::vec3(0.0, 0.0, 1.0), 0.0f, -30.0f);
 	inputManager	= new UserInputManager(camera);
 	window			= new Window(800, 600, inputManager);
 	debugger		= new ValidationDebugger(true);
@@ -124,11 +126,11 @@ void Application::init() {
 	uniformBuffers	= new UniformBuffers(device, swapChain);
 
 	// texture			= new Texture(device, "textures/house.jpg", commandPool);
-	model			= new AssimpModel(device, commandPool, vertexLayout, "models/chinesedragon.dae");
+	model			= new AssimpModel(device, commandPool, vertexLayout);
 
 	descriptorSets	= new DescriptorSets(device, descriptorSetLayout, descriptorPool, uniformBuffers, nullptr);
 
-	drawCommands	= new DrawCommands(device, swapChain, commandPool, renderPass, framebuffers, pipeline, model, descriptorSets);
+	drawCommands	= new DrawCommands(device, swapChain, commandPool, renderPass, framebuffers, uniformBuffers, pipeline, model, descriptorSets);
 
 	imageIsReadyForRenderSemaphores = new Semaphores(device, MAX_IN_FLIGHT);
 	imageFinishedRenderSemaphores	= new Semaphores(device, MAX_IN_FLIGHT);
@@ -164,6 +166,7 @@ void Application::drawFrame() {
 	waitForSwapChainImageReady(swapChainIndex);
 	
 	updateUniformBuffer(swapChainIndex);
+	updateDynamicUniformBuffer(swapChainIndex);
 
 	VkSubmitInfo submitInfo{};
 	VkSemaphore waitSemaphores[] = { imageIsReadyForRenderSemaphores->getSemaphore(currentFrame) };
@@ -198,28 +201,24 @@ void Application::waitForSwapChainImageReady(uint32_t swapChainIndex) {
 }
 
 void Application::updateUniformBuffer(uint32_t swapChainIndex) {
-	UniformBufferObject ubo = {};
-	ubo.model = glm::mat4(1.0f);
-	ubo.model = glm::scale(ubo.model, glm::vec3(0.5, 0.5, 0.5));
-	ubo.model = glm::rotate(ubo.model, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-	ubo.model = glm::rotate(ubo.model, glm::radians(-90.0f), glm::vec3(0.0, 1.0, 0.0));
-	ubo.model = glm::translate(ubo.model, glm::vec3(0.0, 0.0, 0.0));
-
-	ubo.view = camera->getViewMatrix();
-	ubo.proj = glm::perspective(glm::radians(camera->zoom), swapChain->getExtent().width / (float)swapChain->getExtent().height, 0.1f, 50.0f);
-	ubo.proj[1][1] *= -1;
+	uniformBuffers->ubo.view = camera->getViewMatrix();
+	uniformBuffers->ubo.proj = glm::perspective(glm::radians(camera->zoom), swapChain->getExtent().width / (float)swapChain->getExtent().height, 0.1f, 50.0f);
+	uniformBuffers->ubo.proj[1][1] *= -1;
 
 	for (int i = 0; i < 3; ++i)
-		ubo.lightPos[i] = inputManager->getLightPos(i);
+		uniformBuffers->ubo.lightPos[i] = inputManager->getLightPos(i);
 
-	ubo.cameraPos = glm::vec4(camera->position, 0.0);
+	uniformBuffers->ubo.cameraPos = glm::vec4(camera->position, 0.0);
 
-	/*
-	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.proj = glm::perspective(glm::radians(45.0f), swapChain->getExtent().width / (float)swapChain->getExtent().height, 0.1f, 10.0f);
-	*/
-	uniformBuffers->getBufferRef(swapChainIndex)->copyDataToBuffer(&ubo);
+	uniformBuffers->getBufferRef(swapChainIndex)->copyDataToBuffer(&uniformBuffers->ubo);
+}
+
+void Application::updateDynamicUniformBuffer(uint32_t swapChainIndex) {
+	for (uint32_t i = 0; i < 3; ++i) {
+		glm::mat4* modelMat = (glm::mat4*)((uint64_t)uniformBuffers->dynamicUbo.model + ((uint64_t)i * uniformBuffers->getDynamicAlignment()));
+		*modelMat = inputManager->getModelMatrix(i);
+	}
+	uniformBuffers->getDynamicBufferRef(swapChainIndex)->copyDataToBufferFlush(uniformBuffers->dynamicUbo.model);
 }
 
 void Application::setupSubmitInfo(VkSubmitInfo& submitInfo, uint32_t swapChainIndex, 
@@ -293,7 +292,7 @@ void Application::recreateSwapChainRelated() {
 	renderPass = new RenderPass(device, swapChain, colorResource, depthResouce);
 	descriptorSets = new DescriptorSets(device, descriptorSetLayout, descriptorPool, uniformBuffers, nullptr);
 	framebuffers = new Framebuffers(device, renderPass, swapChain);
-	drawCommands = new DrawCommands(device, swapChain, commandPool, renderPass, framebuffers, pipeline, model, descriptorSets);
+	drawCommands = new DrawCommands(device, swapChain, commandPool, renderPass, framebuffers, uniformBuffers, pipeline, model, descriptorSets);
 }
 
 void Application::cleanup() {

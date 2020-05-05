@@ -3,6 +3,7 @@
 #include "SwapChain.h"
 #include "CommandPool.h"
 #include "CommandBuffer.h"
+#include "UniformBuffers.h"
 #include "RenderPass.h"
 #include "Framebuffers.h"
 #include "Pipeline.h"
@@ -13,8 +14,8 @@
 class DrawCommands {
 public:
 	~DrawCommands();
-	DrawCommands(LogicalDevice* device, SwapChain* swapChain, CommandPool* commandPool, 
-		RenderPass* renderPass, Framebuffers* framebuffers, Pipeline* pipeline, AssimpModel* model, DescriptorSets* descriptorSets);
+	DrawCommands(LogicalDevice* device, SwapChain* swapChain, CommandPool* commandPool, RenderPass* renderPass, 
+		Framebuffers* framebuffers, UniformBuffers* uniformBuffers, Pipeline* pipeline, AssimpModel* model, DescriptorSets* descriptorSets);
 	CommandBuffer* getCommandBufferRef(uint32_t index) { return commandBuffers[index]; }
 
 private:
@@ -27,6 +28,7 @@ private:
 	SwapChain* swapChain;
 	RenderPass* renderPass;
 	Framebuffers* framebuffers;
+	UniformBuffers* uniformBuffers;
 	Pipeline* pipeline;
 	AssimpModel* model;
 	DescriptorSets* descriptorSets;
@@ -39,13 +41,14 @@ DrawCommands::~DrawCommands() {
 		delete commandBuffers[i];
 }
 
-DrawCommands::DrawCommands(LogicalDevice* inDevice, SwapChain* inSwapChain, CommandPool* inCommandPool, 
-	RenderPass* inRenderPass, Framebuffers* inFramebuffers, Pipeline* inPipeline, AssimpModel* inModel, DescriptorSets* inDescriptorSets) {
+DrawCommands::DrawCommands(LogicalDevice* inDevice, SwapChain* inSwapChain, CommandPool* inCommandPool, RenderPass* inRenderPass, 
+	Framebuffers* inFramebuffers, UniformBuffers* inUniformBuffers, Pipeline* inPipeline, AssimpModel* inModel, DescriptorSets* inDescriptorSets) {
 	device = inDevice;
 	swapChain = inSwapChain;
 	commandPool = inCommandPool;
 	renderPass = inRenderPass;
 	framebuffers = inFramebuffers;
+	uniformBuffers = inUniformBuffers;
 	pipeline = inPipeline;
 	model = inModel;
 	descriptorSets = inDescriptorSets;
@@ -88,6 +91,7 @@ void DrawCommands::recordCommands() {
 		viewport.width = swapChain->getExtent().width;
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(commandBuffers[i]->getCommandBuffer(), 0, 1, &viewport);
 
 		VkRect2D scissor{};
 		scissor.extent = swapChain->getExtent();
@@ -100,24 +104,37 @@ void DrawCommands::recordCommands() {
 
 		vkCmdBindIndexBuffer(commandBuffers[i]->getCommandBuffer(), model->getIndexBufferRef()->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
-		vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipelineLayout(),
-			0, 1, &descriptorSets->getDescriptorSet(i), 0, nullptr);
-
-		viewport.width = viewport.width / 3.0;
-		vkCmdSetViewport(commandBuffers[i]->getCommandBuffer(), 0, 1, &viewport);
-		vkCmdBindPipeline(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPhongPipeline());
-		vkCmdDrawIndexed(commandBuffers[i]->getCommandBuffer(), model->getIndexCount(), 1, 0, 0, 0);
-		
-		viewport.x = viewport.width;
-		vkCmdSetViewport(commandBuffers[i]->getCommandBuffer(), 0, 1, &viewport);
+		/*
 		vkCmdBindPipeline(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getGouraudPipeline());
-		vkCmdDrawIndexed(commandBuffers[i]->getCommandBuffer(), model->getIndexCount(), 1, 0, 0, 0);
-
-		viewport.x *= 2;
-		vkCmdSetViewport(commandBuffers[i]->getCommandBuffer(), 0, 1, &viewport);
+		uint32_t dynamicOffset = static_cast<uint32_t>(0 * uniformBuffers->getDynamicAlignment());
+		vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipelineLayout(),
+			0, 1, &descriptorSets->getDescriptorSet(i), 1, &dynamicOffset);
+		vkCmdDrawIndexed(commandBuffers[i]->getCommandBuffer(), model->getIndexCount(0), 1, model->getIndexOffset(0), 0, 0);
+		*/
+		// vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipelineLayout(), \
+			0, 1, &descriptorSets->getDescriptorSet(i), 0, nullptr);
+		
+		uint32_t dynamicOffset = static_cast<uint32_t>(0 * uniformBuffers->getDynamicAlignment());
+		vkCmdBindPipeline(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPhongPipeline());
+		vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipelineLayout(),
+			0, 1, &descriptorSets->getDescriptorSet(i), 1, &dynamicOffset);
+		vkCmdDrawIndexed(commandBuffers[i]->getCommandBuffer(), model->getIndexCount(0), 1, 
+			model->getIndexOffset(0), 0, 0);
+		
+		dynamicOffset = static_cast<uint32_t>(1 * uniformBuffers->getDynamicAlignment());
+		vkCmdBindPipeline(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getGouraudPipeline());
+		vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipelineLayout(),
+			0, 1, &descriptorSets->getDescriptorSet(i), 1, &dynamicOffset);
+		vkCmdDrawIndexed(commandBuffers[i]->getCommandBuffer(), model->getIndexCount(1), 1,
+			model->getIndexOffset(1), 0, 0);
+		
+		dynamicOffset = static_cast<uint32_t>(2 * uniformBuffers->getDynamicAlignment());
 		vkCmdBindPipeline(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getFlatPipeline());
-		vkCmdDrawIndexed(commandBuffers[i]->getCommandBuffer(), model->getIndexCount(), 1, 0, 0, 0);
-
+		vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipelineLayout(),
+			0, 1, &descriptorSets->getDescriptorSet(i), 1, &dynamicOffset);
+		vkCmdDrawIndexed(commandBuffers[i]->getCommandBuffer(), model->getIndexCount(2), 1,
+			model->getIndexOffset(2), 0, 0);
+		
 		vkCmdEndRenderPass(commandBuffers[i]->getCommandBuffer());
 
 		commandBuffers[i]->endCommands();

@@ -1,8 +1,10 @@
-#include "App.h"
+#include "Application.h"
 
 int main() {
-	App app;
+	Application app{};
 	app.run();
+	
+	std::cout << "\n";
 	system("pause");
 	return 0;
 }

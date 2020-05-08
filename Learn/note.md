@@ -23,3 +23,14 @@
     - vkCreateDevice
     - vkGetDeviceQueue
 7. swapchain
+
+
+- VkMemory is just a sequence of N bytes in memory.
+
+- VkImage object adds to it e.g. information about the format (so you can address by texels, not bytes).
+
+- VkImageView object helps select part of the VkImage (like stringView, arrayView or whathaveyou) also can help to match to some incompatible interface (by converting format on the fly).
+
+- VkFramebuffer binds a VkImageView with an attachment.
+
+- VkRenderpass defines which attachment will be drawn into

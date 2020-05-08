@@ -194,7 +194,9 @@ private:
 	void createDepthResources();
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 	void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples,
+
 		VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
+
 		VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
@@ -237,6 +239,7 @@ private:
 	VkSampleCountFlagBits getMaxUsableSampleCount();
 
 	GLFWwindow* window;
+
 	VkInstance instance;
 	VkDebugUtilsMessengerEXT debugMessenger;
 	VkSurfaceKHR surface;

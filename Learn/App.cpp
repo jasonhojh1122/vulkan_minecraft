@@ -458,7 +458,8 @@ void App::createSwapChain() {
 }
 
 VkImageView App::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels) {
-	VkImageViewCreateInfo createInfo = {};
+
+  VkImageViewCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	createInfo.image = image;
 	createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
